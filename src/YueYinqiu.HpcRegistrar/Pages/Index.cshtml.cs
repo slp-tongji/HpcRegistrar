@@ -14,7 +14,7 @@ public sealed class IndexModel : PageModel
 
     public string Owner => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    public string UserName => User.FindFirstValue(ClaimTypes.Name) ?? Owner;
+    public string UserName => User.FindFirstValue("name") ?? Owner;
 
     public string Title => appOptions.Title;
 

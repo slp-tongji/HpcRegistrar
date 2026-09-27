@@ -39,8 +39,8 @@
             <button type="submit">添加</button>
         </form>
 
-        <h2>我的公钥（@(Model.Space?.Keys.Count ?? 0)）</h2>
-        @if (Model.Space is null || Model.Space.Keys.Count == 0)
+        <h2>我的公钥（@Model.Keys.Count）</h2>
+        @if (Model.Keys.Count == 0)
         {
             <p>你还没有添加任何公钥。</p>
         }
@@ -54,7 +54,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var key in Model.Space.Keys)
+                    @foreach (var key in Model.Keys)
                     {
                         <tr>
                             <td><code>@key.Fingerprint</code></td>

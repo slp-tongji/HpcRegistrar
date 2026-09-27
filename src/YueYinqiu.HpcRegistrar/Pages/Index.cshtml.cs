@@ -27,7 +27,7 @@ public sealed class IndexModel : PageModel
 
     public string Title => appOptions.Title;
 
-    public SpaceOwnership? Space { get; private set; }
+    public IReadOnlyList<AuthorizedKey> Keys { get; private set; } = [];
 
     public string? Error { get; private set; }
 
@@ -39,13 +39,14 @@ public sealed class IndexModel : PageModel
         this.spaceService = spaceService;
     }
 
-    public void OnGet() => Space = spaceService.FindOwn(Owner);
+    public async Task OnGetAsync(CancellationToken cancellationToken) =>
+        Keys = await spaceService.ListKeysAsync(Owner, cancellationToken);
 
     public async Task<IActionResult> OnPostAddKeyAsync(string key, CancellationToken cancellationToken)
     {
         Error = await spaceService.AddKeyAsync(Owner, UserName, key, cancellationToken);
         Success = Error is null ? "公钥已添加。" : null;
-        Space = spaceService.FindOwn(Owner);
+        Keys = await spaceService.ListKeysAsync(Owner, cancellationToken);
         return Page();
     }
 
@@ -54,7 +55,7 @@ public sealed class IndexModel : PageModel
         var removed = await spaceService.RemoveKeyAsync(Owner, fingerprint, cancellationToken);
         Error = removed ? null : "删除失败：该公钥不存在。";
         Success = removed ? "公钥已删除。" : null;
-        Space = spaceService.FindOwn(Owner);
+        Keys = await spaceService.ListKeysAsync(Owner, cancellationToken);
         return Page();
     }
 }

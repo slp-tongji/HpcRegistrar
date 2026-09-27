@@ -2,7 +2,6 @@ using System.Security.Cryptography.X509Certificates;
 using CliFx;
 using CliFx.Binding;
 using CliFx.Infrastructure;
-using LiteDB;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -74,10 +73,7 @@ public sealed partial class ServeCommand : ICommand
         var hpcOptions = new HpcOptions(HpcHost, HpcPort, HpcUser, HpcKey, HpcHome, HpcSsdfsRoot);
         var hpcClient = new SshNetHpcClient(hpcOptions);
 
-        var spaceService = new IsolationSpaceService(
-            hpcClient,
-            new SpaceRepository(new LiteDatabase(Path.Combine(Data, "spaces.db"))),
-            hpcOptions);
+        var spaceService = new IsolationSpaceService(hpcClient, hpcOptions);
 
         builder.Services.AddSingleton(new AppOptions(Title));
         builder.Services.AddSingleton(spaceService);

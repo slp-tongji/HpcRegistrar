@@ -26,6 +26,12 @@ public sealed class SshNetHpcClient : IDisposable
         return status == 0;
     }
 
+    public async Task<string> ReadFileAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var (_, output) = await RunAsync($"cat {ShellQuote(path)} 2>/dev/null", cancellationToken);
+        return output;
+    }
+
     public async Task CreateDirectoryAsync(string path, CancellationToken cancellationToken = default)
     {
         await RunCheckedAsync($"mkdir -p {ShellQuote(path)}", cancellationToken);

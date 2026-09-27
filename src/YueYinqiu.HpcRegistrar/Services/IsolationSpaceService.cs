@@ -1,12 +1,10 @@
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class IsolationSpaceService(SshNetHpcClient hpc, SpaceRepository repository, HpcOptions options) : IDisposable
+public sealed record AuthorizedKey(string Fingerprint, string KeyLine);
+
+public sealed class IsolationSpaceService(SshNetHpcClient hpc, HpcOptions options) : IDisposable
 {
-    public void Dispose()
-    {
-        hpc.Dispose();
-        repository.Dispose();
-    }
+    public void Dispose() => hpc.Dispose();
 
     public async Task<string?> AddKeyAsync(string sub, string displayName, string key, CancellationToken cancellationToken = default)
     {
@@ -17,54 +15,58 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, SpaceRepository r
         }
 
         var layout = new SpaceLayout(options, SpaceName.FromSub(sub));
-        var space = repository.FindByOwner(sub);
 
-        if (space is null)
+        if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
         {
-            if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
-            {
-                await CreateSpaceFilesAsync(layout, cancellationToken);
-            }
-            space = new SpaceOwnership(layout.Name, sub, []);
+            await CreateSpaceFilesAsync(layout, cancellationToken);
         }
-        else if (space.Keys.Any(k => k.Fingerprint == fingerprint))
+
+        if ((await ListKeysAsync(sub, cancellationToken)).Any(k => k.Fingerprint == fingerprint))
         {
             return "该公钥已存在。";
         }
 
-        var keyLine = layout.AuthorizedKeyLine(key, displayName);
-        await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, keyLine, cancellationToken);
-
-        space = space with { Keys = [.. space.Keys, new SpaceKey(fingerprint, key, keyLine)] };
-        repository.Upsert(space);
-
+        await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(key, displayName), cancellationToken);
         return null;
     }
 
     public async Task<bool> RemoveKeyAsync(string sub, string fingerprint, CancellationToken cancellationToken = default)
     {
-        var space = repository.FindByOwner(sub);
-        if (space is null)
+        var layout = new SpaceLayout(options, SpaceName.FromSub(sub));
+        var target = (await ListKeysAsync(sub, cancellationToken)).FirstOrDefault(k => k.Fingerprint == fingerprint);
+        if (target is null)
         {
             return false;
         }
 
-        var key = space.Keys.FirstOrDefault(k => k.Fingerprint == fingerprint);
-        if (key is null)
-        {
-            return false;
-        }
-
-        var layout = new SpaceLayout(options, space.Name);
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, key.KeyLine, cancellationToken);
-
-        space = space with { Keys = space.Keys.Where(k => k.Fingerprint != fingerprint).ToList() };
-        repository.Upsert(space);
-
+        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, target.KeyLine, cancellationToken);
         return true;
     }
 
-    public SpaceOwnership? FindOwn(string sub) => repository.FindByOwner(sub);
+    public async Task<IReadOnlyList<AuthorizedKey>> ListKeysAsync(string sub, CancellationToken cancellationToken = default)
+    {
+        var layout = new SpaceLayout(options, SpaceName.FromSub(sub));
+        var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
+        var prefix = $"command=\"{layout.SshCommand}\" ";
+
+        var result = new List<AuthorizedKey>();
+        foreach (var line in content.Split('\n'))
+        {
+            var trimmed = line.TrimEnd('\r');
+            if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var fingerprint = SshPublicKeyParser.GetFingerprint(trimmed[prefix.Length..]);
+            if (fingerprint is not null)
+            {
+                result.Add(new AuthorizedKey(fingerprint, trimmed));
+            }
+        }
+
+        return result;
+    }
 
     private async Task CreateSpaceFilesAsync(SpaceLayout layout, CancellationToken cancellationToken)
     {

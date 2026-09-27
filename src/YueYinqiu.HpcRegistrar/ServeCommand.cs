@@ -34,7 +34,7 @@ public sealed partial class ServeCommand : ICommand
     public required string HpcHost { get; set; }
 
     [CommandOption("hpc-port")]
-    public int HpcPort { get; set; } = 22;
+    public required int HpcPort { get; set; }
 
     [CommandOption("hpc-user")]
     public required string HpcUser { get; set; }

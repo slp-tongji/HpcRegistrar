@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace YueYinqiu.HpcRegistrar.Services;
 
 public static class SshPublicKeyParser
@@ -22,19 +20,6 @@ public static class SshPublicKeyParser
         }
 
         return $"{parts[0]} {parts[1]}";
-    }
-
-    public static string? GetFingerprint(string keyLine)
-    {
-        var normalized = Normalize(keyLine);
-        if (normalized is null)
-        {
-            return null;
-        }
-
-        var blob = Convert.FromBase64String(normalized.Split(' ')[1]);
-        var hash = SHA256.HashData(blob);
-        return "SHA256:" + Convert.ToBase64String(hash).TrimEnd('=');
     }
 
     private static bool IsKnownType(string type) => type switch

@@ -49,7 +49,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>公钥指纹</th>
+                        <th>公钥</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -57,7 +57,7 @@
                     @foreach (var key in Model.Keys)
                     {
                         <tr>
-                            <td><code>@key.Fingerprint</code></td>
+                            <td><code>@key.Key</code></td>
                             <td>
                                 <form method="post" asp-page-handler="RemoveKey" onsubmit="return confirm('确认删除该公钥？');">
                                     @Html.AntiForgeryToken()

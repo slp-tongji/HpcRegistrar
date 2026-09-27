@@ -1,6 +1,6 @@
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed record AuthorizedKey(string Fingerprint, string Key);
+public sealed record AuthorizedKey(string Key);
 
 public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 {
@@ -52,13 +52,10 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
             }
 
             var normalized = SshPublicKeyParser.Normalize(trimmed[prefix.Length..]);
-            if (normalized is null)
+            if (normalized is not null)
             {
-                continue;
+                result.Add(new AuthorizedKey(normalized));
             }
-
-            var fingerprint = SshPublicKeyParser.GetFingerprint(normalized)!;
-            result.Add(new AuthorizedKey(fingerprint, normalized));
         }
 
         return result;

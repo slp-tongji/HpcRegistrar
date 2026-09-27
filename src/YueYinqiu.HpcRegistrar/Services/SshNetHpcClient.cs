@@ -3,7 +3,7 @@ using Renci.SshNet;
 
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SshNetHpcClient : IHpcClient
+public sealed class SshNetHpcClient : IDisposable
 {
     private readonly HpcOptions options;
     private readonly SemaphoreSlim gate = new(1, 1);

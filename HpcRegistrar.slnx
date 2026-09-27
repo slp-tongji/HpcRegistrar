@@ -2,8 +2,4 @@
   <Folder Name="/src/">
     <Project Path="src/YueYinqiu.HpcRegistrar/YueYinqiu.HpcRegistrar.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/YueYinqiu.HpcRegistrar.E2E/YueYinqiu.HpcRegistrar.E2E.csproj" />
-    <Project Path="tests/YueYinqiu.HpcRegistrar.Live/YueYinqiu.HpcRegistrar.Live.csproj" />
-  </Folder>
 </Solution>

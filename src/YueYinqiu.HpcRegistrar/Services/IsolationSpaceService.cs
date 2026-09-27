@@ -1,7 +1,13 @@
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class IsolationSpaceService(IHpcClient hpc, SpaceRepository repository, HpcOptions options)
+public sealed class IsolationSpaceService(SshNetHpcClient hpc, SpaceRepository repository, HpcOptions options) : IDisposable
 {
+    public void Dispose()
+    {
+        hpc.Dispose();
+        repository.Dispose();
+    }
+
     public async Task<string?> AddKeyAsync(string sub, string displayName, string key, CancellationToken cancellationToken = default)
     {
         var fingerprint = SshPublicKeyParser.GetFingerprint(key);

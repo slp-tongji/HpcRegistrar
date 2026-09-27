@@ -61,9 +61,7 @@ public sealed partial class ServeCommand : ICommand
         await app.RunAsync();
     }
 
-    public WebApplication BuildApp() => BuildApp(null);
-
-    public WebApplication BuildApp(IHpcClient? hpcClient)
+    public WebApplication BuildApp()
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -74,7 +72,7 @@ public sealed partial class ServeCommand : ICommand
         Directory.CreateDirectory(Data);
 
         var hpcOptions = new HpcOptions(HpcHost, HpcPort, HpcUser, HpcKey, HpcHome, HpcSsdfsRoot);
-        hpcClient ??= new SshNetHpcClient(hpcOptions);
+        var hpcClient = new SshNetHpcClient(hpcOptions);
 
         var spaceService = new IsolationSpaceService(
             hpcClient,
@@ -82,8 +80,6 @@ public sealed partial class ServeCommand : ICommand
             hpcOptions);
 
         builder.Services.AddSingleton(new AppOptions(Title));
-        builder.Services.AddSingleton(hpcOptions);
-        builder.Services.AddSingleton<IHpcClient>(hpcClient);
         builder.Services.AddSingleton(spaceService);
 
         builder.Services

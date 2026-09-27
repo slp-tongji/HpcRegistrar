@@ -12,7 +12,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
             return "无法解析该公钥，请重新输入。";
         }
 
-        var layout = new SpaceLayout(username, SpaceName.FromSub(sub));
+        var layout = new SpaceLayout(username, sub);
 
         if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
         {
@@ -30,7 +30,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 
     public async Task<bool> RemoveKeyAsync(string sub, string fingerprint, CancellationToken cancellationToken = default)
     {
-        var layout = new SpaceLayout(username, SpaceName.FromSub(sub));
+        var layout = new SpaceLayout(username, sub);
         var target = (await ListKeysAsync(sub, cancellationToken)).FirstOrDefault(k => k.Fingerprint == fingerprint);
         if (target is null)
         {
@@ -43,7 +43,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 
     public async Task<IReadOnlyList<AuthorizedKey>> ListKeysAsync(string sub, CancellationToken cancellationToken = default)
     {
-        var layout = new SpaceLayout(username, SpaceName.FromSub(sub));
+        var layout = new SpaceLayout(username, sub);
         var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
         var prefix = $"command=\"{layout.SshCommand}\" ";
 

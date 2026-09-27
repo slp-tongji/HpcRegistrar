@@ -1,20 +1,24 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SpaceLayout(string username, string name)
+public sealed class SpaceLayout(string username, string sub)
 {
     public const string HomeRoot = "/share/home";
 
     public const string SsdfsDataHome = "/ssdfs/datahome";
 
-    public string Name => name;
+    public string Name { get; } = "s" + Convert.ToHexString(
+        SHA256.HashData(Encoding.UTF8.GetBytes(sub)).AsSpan(0, 8)).ToLowerInvariant();
 
     public string Username => username;
 
     public string Home => Path.Combine(HomeRoot, username);
 
-    public string Space => Path.Combine(Home, "data", name);
+    public string Space => Path.Combine(Home, "data", Name);
 
-    public string Ssdfs => Path.Combine(SsdfsDataHome, username, name);
+    public string Ssdfs => Path.Combine(SsdfsDataHome, username, Name);
 
     public string SshCommand => Path.Combine(Space, ".ssh-command");
 

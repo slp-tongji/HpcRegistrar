@@ -1,35 +1,24 @@
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SpaceLayout
+public sealed class SpaceLayout(string username, string name)
 {
     public const string HomeRoot = "/share/home";
 
     public const string SsdfsDataHome = "/ssdfs/datahome";
 
-    public string Name { get; }
+    public string Name => name;
 
-    public string Username { get; }
+    public string Username => username;
 
-    public string Home { get; }
+    public string Home => Path.Combine(HomeRoot, username);
 
-    public string Space { get; }
+    public string Space => Path.Combine(Home, "data", name);
 
-    public string Ssdfs { get; }
+    public string Ssdfs => Path.Combine(SsdfsDataHome, username, name);
 
-    public string SshCommand { get; }
+    public string SshCommand => Path.Combine(Space, ".ssh-command");
 
-    public string AuthorizedKeys { get; }
-
-    public SpaceLayout(string username, string name)
-    {
-        Name = name;
-        Username = username;
-        Home = Path.Combine(HomeRoot, Username);
-        Space = Path.Combine(Home, "data", name);
-        Ssdfs = Path.Combine(SsdfsDataHome, Username, name);
-        SshCommand = Path.Combine(Space, ".ssh-command");
-        AuthorizedKeys = Path.Combine(Home, ".ssh", "authorized_keys");
-    }
+    public string AuthorizedKeys => Path.Combine(Home, ".ssh", "authorized_keys");
 
     public string SshCommandContent() =>
         $$"""

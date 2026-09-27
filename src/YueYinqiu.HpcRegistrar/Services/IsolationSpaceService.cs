@@ -4,13 +4,15 @@ public sealed record AuthorizedKey(string Fingerprint, string KeyLine);
 
 public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 {
-    public async Task<string?> AddKeyAsync(string sub, string displayName, string key, CancellationToken cancellationToken = default)
+    public async Task<string?> AddKeyAsync(string sub, string key, CancellationToken cancellationToken = default)
     {
-        var fingerprint = SshPublicKeyParser.GetFingerprint(key);
-        if (fingerprint is null)
+        var normalized = SshPublicKeyParser.Normalize(key);
+        if (normalized is null)
         {
             return "无法解析该公钥，请重新输入。";
         }
+
+        var fingerprint = SshPublicKeyParser.GetFingerprint(normalized)!;
 
         var layout = new SpaceLayout(username, sub);
 
@@ -24,7 +26,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
             return "该公钥已存在。";
         }
 
-        await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(key, displayName), cancellationToken);
+        await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
         return null;
     }
 

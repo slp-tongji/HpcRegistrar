@@ -4,24 +4,35 @@ namespace YueYinqiu.HpcRegistrar.Services;
 
 public static class SshPublicKeyParser
 {
-    public static string? GetFingerprint(string keyLine)
+    public static string? Normalize(string keyLine)
     {
-        var parts = keyLine.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var parts = keyLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length < 2 || !IsKnownType(parts[0]))
         {
             return null;
         }
 
-        byte[] blob;
         try
         {
-            blob = Convert.FromBase64String(parts[1]);
+            Convert.FromBase64String(parts[1]);
         }
         catch (FormatException)
         {
             return null;
         }
 
+        return parts[0] + " " + parts[1];
+    }
+
+    public static string? GetFingerprint(string keyLine)
+    {
+        var normalized = Normalize(keyLine);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        var blob = Convert.FromBase64String(normalized.Split(' ')[1]);
         var hash = SHA256.HashData(blob);
         return "SHA256:" + Convert.ToBase64String(hash).TrimEnd('=');
     }

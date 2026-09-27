@@ -46,9 +46,9 @@ public sealed class IndexModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostRemoveKeyAsync(string fingerprint, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostRemoveKeyAsync(string key, CancellationToken cancellationToken)
     {
-        var removed = await spaceService.RemoveKeyAsync(Owner, fingerprint, cancellationToken);
+        var removed = await spaceService.RemoveKeyAsync(Owner, key, cancellationToken);
         Error = removed ? null : "删除失败：该公钥不存在。";
         Success = removed ? "公钥已删除。" : null;
         Keys = await spaceService.ListKeysAsync(Owner, cancellationToken);

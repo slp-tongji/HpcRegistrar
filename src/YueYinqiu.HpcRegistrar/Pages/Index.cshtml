@@ -61,7 +61,7 @@
                             <td>
                                 <form method="post" asp-page-handler="RemoveKey" onsubmit="return confirm('确认删除该公钥？');">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="fingerprint" value="@key.Fingerprint" />
+                                    <input type="hidden" name="key" value="@key.Key" />
                                     <button type="submit" class="danger">删除</button>
                                 </form>
                             </td>

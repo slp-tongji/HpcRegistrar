@@ -1,6 +1,6 @@
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed record AuthorizedKey(string Fingerprint, string KeyLine);
+public sealed record AuthorizedKey(string Fingerprint, string Key);
 
 public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 {
@@ -23,16 +23,16 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
         return null;
     }
 
-    public async Task<bool> RemoveKeyAsync(string sub, string fingerprint, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveKeyAsync(string sub, string key, CancellationToken cancellationToken = default)
     {
-        var layout = new SpaceLayout(username, sub);
-        var target = (await ListKeysAsync(sub, cancellationToken)).FirstOrDefault(k => k.Fingerprint == fingerprint);
-        if (target is null)
+        var normalized = SshPublicKeyParser.Normalize(key);
+        if (normalized is null)
         {
             return false;
         }
 
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, target.KeyLine, cancellationToken);
+        var layout = new SpaceLayout(username, sub);
+        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
         return true;
     }
 
@@ -51,11 +51,14 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
                 continue;
             }
 
-            var fingerprint = SshPublicKeyParser.GetFingerprint(trimmed[prefix.Length..]);
-            if (fingerprint is not null)
+            var normalized = SshPublicKeyParser.Normalize(trimmed[prefix.Length..]);
+            if (normalized is null)
             {
-                result.Add(new AuthorizedKey(fingerprint, trimmed));
+                continue;
             }
+
+            var fingerprint = SshPublicKeyParser.GetFingerprint(normalized)!;
+            result.Add(new AuthorizedKey(fingerprint, normalized));
         }
 
         return result;

@@ -18,9 +18,6 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("listen")]
     public required string Listen { get; set; }
 
-    [CommandOption("data")]
-    public required string Data { get; set; }
-
     [CommandOption("oidc")]
     public required string Oidc { get; set; }
 
@@ -64,8 +61,6 @@ public sealed partial class ServeCommand : ICommand
             ApplicationName = typeof(ServeCommand).Assembly.GetName().Name,
             Args = ["--urls", Listen],
         });
-
-        Directory.CreateDirectory(Data);
 
         var hpcOptions = new HpcOptions(HpcHost, HpcPort, HpcUser, HpcKey, HpcHome, HpcSsdfsRoot);
         var hpcClient = new SshNetHpcClient(hpcOptions);

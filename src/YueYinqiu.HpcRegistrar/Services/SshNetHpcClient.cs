@@ -3,23 +3,8 @@ using Renci.SshNet;
 
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SshNetHpcClient : IDisposable
+public sealed class SshNetHpcClient(HpcOptions options)
 {
-    private readonly HpcOptions options;
-    private readonly SemaphoreSlim gate = new(1, 1);
-    private SshClient? client;
-
-    public SshNetHpcClient(HpcOptions options)
-    {
-        this.options = options;
-    }
-
-    public void Dispose()
-    {
-        gate.Dispose();
-        client?.Dispose();
-    }
-
     public async Task<bool> PathExistsAsync(string path, CancellationToken cancellationToken = default)
     {
         var (status, _) = await RunAsync($"test -e {ShellQuote(path)}", cancellationToken);
@@ -83,19 +68,11 @@ public sealed class SshNetHpcClient : IDisposable
 
     private async Task<(int? Status, string Output)> RunAsync(string command, CancellationToken cancellationToken)
     {
-        await gate.WaitAsync(cancellationToken);
-        try
-        {
-            EnsureConnected();
-            using var cmd = client!.CreateCommand(command);
-            await cmd.ExecuteAsync(cancellationToken);
-            var output = string.Concat(cmd.Result, cmd.Error);
-            return (cmd.ExitStatus, output);
-        }
-        finally
-        {
-            gate.Release();
-        }
+        using var client = CreateConnectedClient();
+        using var cmd = client.CreateCommand(command);
+        await cmd.ExecuteAsync(cancellationToken);
+        var output = string.Concat(cmd.Result, cmd.Error);
+        return (cmd.ExitStatus, output);
     }
 
     private async Task RunCheckedAsync(string command, CancellationToken cancellationToken)
@@ -107,23 +84,17 @@ public sealed class SshNetHpcClient : IDisposable
         }
     }
 
-    private void EnsureConnected()
+    private SshClient CreateConnectedClient()
     {
-        if (client is null)
-        {
-            var privateKey = new PrivateKeyFile(options.PrivateKeyPath.FullName);
-            var connectionInfo = new Renci.SshNet.ConnectionInfo(
-                options.Host,
-                options.Port,
-                options.Username,
-                new PrivateKeyAuthenticationMethod(options.Username, privateKey));
-            client = new SshClient(connectionInfo);
-        }
-
-        if (!client.IsConnected)
-        {
-            client.Connect();
-        }
+        var privateKey = new PrivateKeyFile(options.PrivateKeyPath.FullName);
+        var connectionInfo = new Renci.SshNet.ConnectionInfo(
+            options.Host,
+            options.Port,
+            options.Username,
+            new PrivateKeyAuthenticationMethod(options.Username, privateKey));
+        var client = new SshClient(connectionInfo);
+        client.Connect();
+        return client;
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";

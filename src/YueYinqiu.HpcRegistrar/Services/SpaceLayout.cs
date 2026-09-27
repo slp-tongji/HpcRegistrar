@@ -5,22 +5,22 @@ namespace YueYinqiu.HpcRegistrar.Services;
 
 public sealed class SpaceLayout(string username, string sub)
 {
-    public const string HomeRoot = "/share/home";
+    private const string shareHome = "/share/home";
 
-    public const string SsdfsDataHome = "/ssdfs/datahome";
+    private const string ssdfsDatahome = "/ssdfs/datahome";
 
     public string Name { get; } = "s" + Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes(sub)).AsSpan(0, 8)).ToLowerInvariant();
 
     public string Username => username;
 
-    public string Home => Path.Combine(HomeRoot, username);
+    public string Home => Path.Combine(shareHome, username);
 
     public string Space => Path.Combine(Home, "data", Name);
 
-    public string Ssdfs => Path.Combine(SsdfsDataHome, username, Name);
+    public string Ssdfs => Path.Combine(ssdfsDatahome, username, Name);
 
-    public string SshCommand => Path.Combine(Space, ".ssh-command");
+    public string SshCommand => Path.Combine(Space, ".hpc-isolation", "ssh-command.sh");
 
     public string AuthorizedKeys => Path.Combine(Home, ".ssh", "authorized_keys");
 

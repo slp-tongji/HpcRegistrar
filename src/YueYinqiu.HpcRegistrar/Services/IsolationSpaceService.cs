@@ -12,18 +12,11 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
             return "无法解析该公钥，请重新输入。";
         }
 
-        var fingerprint = SshPublicKeyParser.GetFingerprint(normalized)!;
-
         var layout = new SpaceLayout(username, sub);
 
         if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
         {
             await CreateSpaceFilesAsync(layout, cancellationToken);
-        }
-
-        if ((await ListKeysAsync(sub, cancellationToken)).Any(k => k.Fingerprint == fingerprint))
-        {
-            return "该公钥已存在。";
         }
 
         await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);

@@ -28,7 +28,7 @@ public sealed partial class ServeCommand : ICommand
     public required string OidcSecret { get; set; }
 
     [CommandOption("oidc-ca")]
-    public string? OidcCa { get; set; } = null;
+    public FileInfo? OidcCa { get; set; } = null;
 
     [CommandOption("hpc-host")]
     public required string HpcHost { get; set; }
@@ -39,8 +39,8 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("hpc-user")]
     public required string HpcUser { get; set; }
 
-    [CommandOption("hpc-key", EnvironmentVariable = "HPC_REGISTRAR_ARGUMENT_HPC_KEY")]
-    public required string HpcKey { get; set; }
+    [CommandOption("hpc-key")]
+    public required FileInfo HpcKey { get; set; }
 
     [CommandOption("hpc-home")]
     public required string HpcHome { get; set; }
@@ -118,7 +118,7 @@ public sealed partial class ServeCommand : ICommand
 
                 if (OidcCa is not null)
                 {
-                    var trustedCa = X509Certificate2.CreateFromPem(File.ReadAllText(OidcCa));
+                    var trustedCa = X509Certificate2.CreateFromPem(File.ReadAllText(OidcCa.FullName));
                     var handler = new SocketsHttpHandler();
                     handler.SslOptions.RemoteCertificateValidationCallback = (_, cert, _, errors) =>
                     {

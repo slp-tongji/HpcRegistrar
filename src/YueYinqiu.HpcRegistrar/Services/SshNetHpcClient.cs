@@ -111,7 +111,7 @@ public sealed class SshNetHpcClient : IDisposable
     {
         if (client is null)
         {
-            var privateKey = new PrivateKeyFile(options.PrivateKeyPath);
+            var privateKey = new PrivateKeyFile(options.PrivateKeyPath.FullName);
             var connectionInfo = new Renci.SshNet.ConnectionInfo(
                 options.Host,
                 options.Port,

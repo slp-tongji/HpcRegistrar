@@ -4,7 +4,7 @@ public sealed record HpcOptions(
     string Host,
     int Port,
     string Username,
-    string PrivateKeyPath,
+    FileInfo PrivateKeyPath,
     string Home,
     string SsdfsDataHome)
 {

@@ -29,8 +29,6 @@ public static class SshPublicKeyParser
     private static bool IsKnownType(string type) => type switch
     {
         "ssh-rsa" => true,
-        "rsa-sha2-256" => true,
-        "rsa-sha2-512" => true,
         "ssh-ed25519" => true,
         "ecdsa-sha2-nistp256" => true,
         "ecdsa-sha2-nistp384" => true,

@@ -2,7 +2,7 @@
 @using YueYinqiu.HpcRegistrar.Services
 @model YueYinqiu.HpcRegistrar.Pages.IndexModel
 @{
-    ViewData["Title"] = $"我的隔离空间（{Model.Title}）";
+    ViewData["Title"] = "我的隔离空间";
 }
 <!doctype html>
 <html lang="zh">
@@ -14,7 +14,7 @@
 </head>
 <body>
     <main>
-        <h1>我的隔离空间（@Model.Title）</h1>
+        <h1>我的隔离空间</h1>
         <p>
             当前用户：<strong>@Model.UserName</strong>
             <form method="post" action="/Account/Logout" style="display:inline">

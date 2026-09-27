@@ -10,7 +10,6 @@ namespace YueYinqiu.HpcRegistrar.Pages;
 [Authorize]
 public sealed class IndexModel : PageModel
 {
-    private readonly AppOptions appOptions;
     private readonly IsolationSpaceService spaceService;
 
     public string Owner
@@ -25,17 +24,14 @@ public sealed class IndexModel : PageModel
 
     public string UserName => User.FindFirstValue("name") ?? Owner;
 
-    public string Title => appOptions.Title;
-
     public IReadOnlyList<AuthorizedKey> Keys { get; private set; } = [];
 
     public string? Error { get; private set; }
 
     public string? Success { get; private set; }
 
-    public IndexModel(AppOptions appOptions, IsolationSpaceService spaceService)
+    public IndexModel(IsolationSpaceService spaceService)
     {
-        this.appOptions = appOptions;
         this.spaceService = spaceService;
     }
 

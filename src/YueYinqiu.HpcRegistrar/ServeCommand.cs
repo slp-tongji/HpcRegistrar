@@ -18,9 +18,6 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("listen")]
     public required string Listen { get; set; }
 
-    [CommandOption("title")]
-    public required string Title { get; set; }
-
     [CommandOption("data")]
     public required string Data { get; set; }
 
@@ -75,7 +72,6 @@ public sealed partial class ServeCommand : ICommand
 
         var spaceService = new IsolationSpaceService(hpcClient, hpcOptions);
 
-        builder.Services.AddSingleton(new AppOptions(Title));
         builder.Services.AddSingleton(spaceService);
 
         builder.Services

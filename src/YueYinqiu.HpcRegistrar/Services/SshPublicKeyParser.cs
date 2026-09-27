@@ -21,7 +21,7 @@ public static class SshPublicKeyParser
             return null;
         }
 
-        return parts[0] + " " + parts[1];
+        return $"{parts[0]} {parts[1]}";
     }
 
     public static string? GetFingerprint(string keyLine)

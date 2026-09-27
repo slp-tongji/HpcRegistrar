@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CliFx" Version="3.0.1" />
+      <PackageReference Include="LiteDB" Version="5.0.21" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.11" />
+      <PackageReference Include="SSH.NET" Version="2026.0.0" />
+    </ItemGroup>
+
+</Project>

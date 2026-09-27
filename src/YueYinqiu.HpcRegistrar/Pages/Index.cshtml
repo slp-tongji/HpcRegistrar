@@ -1,0 +1,84 @@
+@page "/"
+@using YueYinqiu.HpcRegistrar.Services
+@model YueYinqiu.HpcRegistrar.Pages.IndexModel
+@{
+    ViewData["Title"] = $"我的隔离空间（{Model.Title}）";
+}
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    @await Html.PartialAsync("_Styles")
+</head>
+<body>
+    <main>
+        <h1>我的隔离空间（@Model.Title）</h1>
+        <p>
+            当前用户：<strong>@Model.UserName</strong>
+            <span>· <a href="/administration">管理员模式</a></span>
+            <form method="post" action="/Account/Logout" style="display:inline">
+                <button type="submit">退出登录</button>
+            </form>
+        </p>
+
+        @if (Model.Error is not null)
+        {
+            <div class="error">@Model.Error</div>
+        }
+        @if (Model.Success is not null)
+        {
+            <div class="notice">@Model.Success</div>
+        }
+
+        <h2>创建隔离空间</h2>
+        <form method="post" asp-page-handler="Create">
+            @Html.AntiForgeryToken()
+            <label for="name">空间名称：</label>
+            <input id="name" name="name" placeholder="由字母、数字、下划线或减号组成，首位是字母，至少 4 个字符" required />
+            <label for="contact">联系方式：</label>
+            <input id="contact" name="contact" placeholder="用于遇到问题时及时联系" required />
+            <label for="key">SSH 公钥：</label>
+            <textarea id="key" name="key" rows="4" placeholder="ssh-ed25519 AAAA..." required></textarea>
+            <button type="submit">创建</button>
+        </form>
+
+        <h2>我的空间（@Model.Spaces.Count）</h2>
+        @if (Model.Spaces.Count == 0)
+        {
+            <p>暂无隔离空间。</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>公钥指纹</th>
+                        <th>联系方式</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var space in Model.Spaces)
+                    {
+                        <tr>
+                            <td><code>@space.Name</code></td>
+                            <td><code>@space.Fingerprint</code></td>
+                            <td>@space.Contact</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete" onsubmit="return confirm('确认删除该隔离空间？');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="name" value="@space.Name" />
+                                    <button type="submit" class="danger">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </main>
+</body>
+</html>

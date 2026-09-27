@@ -1,0 +1,66 @@
+<style>
+    :root {
+        --bg: #f7f7f8;
+        --fg: #1f1f23;
+        --border: #d9d9de;
+        --primary: #2563eb;
+        --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    main {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    a.button, button {
+        display: inline-block;
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--primary);
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    button.danger { color: #fff; background: var(--danger); border-color: var(--danger); }
+    button:hover { filter: brightness(0.96); }
+
+    form { margin: 12px 0; }
+    label { display: block; margin: 8px 0 4px; font-weight: 600; }
+    input, textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.95rem;
+        font-family: inherit;
+    }
+    textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { background: #f0f0f2; }
+
+    code { background: #eef; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; word-break: break-all; }
+
+    .error { background: #fee; border: 1px solid #fcc; color: var(--danger); padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+    .notice { background: #effaf0; border: 1px solid #bfe5c0; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+</style>

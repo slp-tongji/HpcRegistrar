@@ -6,8 +6,6 @@ public sealed class SpaceLayout
 
     public const string SsdfsDataHome = "/ssdfs/datahome";
 
-    public HpcOptions Options { get; }
-
     public string Name { get; }
 
     public string Username { get; }
@@ -22,11 +20,10 @@ public sealed class SpaceLayout
 
     public string AuthorizedKeys { get; }
 
-    public SpaceLayout(HpcOptions options, string name)
+    public SpaceLayout(string username, string name)
     {
-        Options = options;
         Name = name;
-        Username = options.Username;
+        Username = username;
         Home = Path.Combine(HomeRoot, Username);
         Space = Path.Combine(Home, "data", name);
         Ssdfs = Path.Combine(SsdfsDataHome, Username, name);

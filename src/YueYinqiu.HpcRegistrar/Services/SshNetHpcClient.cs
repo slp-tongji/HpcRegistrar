@@ -3,7 +3,7 @@ using Renci.SshNet;
 
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SshNetHpcClient(HpcOptions options)
+public sealed class SshNetHpcClient(string host, int port, string username, FileInfo privateKeyPath)
 {
     public async Task<bool> PathExistsAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -86,12 +86,12 @@ public sealed class SshNetHpcClient(HpcOptions options)
 
     private SshClient CreateConnectedClient()
     {
-        var privateKey = new PrivateKeyFile(options.PrivateKeyPath.FullName);
+        var privateKey = new PrivateKeyFile(privateKeyPath.FullName);
         var connectionInfo = new Renci.SshNet.ConnectionInfo(
-            options.Host,
-            options.Port,
-            options.Username,
-            new PrivateKeyAuthenticationMethod(options.Username, privateKey));
+            host,
+            port,
+            username,
+            new PrivateKeyAuthenticationMethod(username, privateKey));
         var client = new SshClient(connectionInfo);
         client.Connect();
         return client;

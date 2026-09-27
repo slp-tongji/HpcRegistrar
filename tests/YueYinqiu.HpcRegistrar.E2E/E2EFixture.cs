@@ -26,7 +26,6 @@ public sealed class E2EFixture : IAsyncLifetime
         {
             new("alice", "Alice", Array.Empty<string>()),
             new("bob", "Bob", Array.Empty<string>()),
-            new("administrator", "Administrator", new[] { "administrator" }),
         };
         var oidcState = new MockOidcState(users);
 
@@ -40,7 +39,6 @@ public sealed class E2EFixture : IAsyncLifetime
         {
             Listen = "http://127.0.0.1:0",
             Data = dataPath,
-            Administrator = "administrator",
             Title = "测试平台",
             Oidc = oidcUrl,
             OidcId = "test-client",

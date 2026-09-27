@@ -1,11 +1,14 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using YueYinqiu.HpcRegistrar.Services;
 
 namespace YueYinqiu.HpcRegistrar.E2E;
 
 public sealed class E2ETests : IClassFixture<E2EFixture>
 {
-    private const string TestKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZvb2Jhcg==";
+    private const string Key1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZvb2Jhcg==";
+    private const string Key2 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGJhcmJheg==";
+    private const string Key3 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHF1eHV4eQ==";
 
     private readonly E2EFixture fixture;
 
@@ -13,6 +16,8 @@ public sealed class E2ETests : IClassFixture<E2EFixture>
     {
         this.fixture = fixture;
     }
+
+    private static string Fp(string key) => SshPublicKeyParser.GetFingerprint(key)!;
 
     [Fact]
     public async Task Unauthenticated_request_is_redirected_to_login()
@@ -24,142 +29,88 @@ public sealed class E2ETests : IClassFixture<E2EFixture>
     }
 
     [Fact]
-    public async Task User_can_create_list_and_delete_own_space()
+    public async Task User_can_add_and_remove_own_key()
     {
-        var client = await LoginAsync("alice");
+        var alice = await LoginAsync("alice");
 
-        var createHtml = await CreateSpaceAsync(client, "alpha", "alice@example.com", TestKey);
-        Assert.Contains("alpha", createHtml);
+        var addHtml = await AddKeyAsync(alice, Key1);
+        Assert.Contains(Fp(Key1), addHtml);
 
-        var homeHtml = await GetHomeHtmlAsync(client);
-        Assert.Contains("alpha", homeHtml);
-
-        var sshCommandPath = "/home/hpcuser/data/alpha/.ssh-command";
+        var spaceName = SpaceName.FromSub("alice");
+        var sshCommandPath = $"/home/hpcuser/data/{spaceName}/.ssh-command";
         Assert.Contains(sshCommandPath, fixture.Hpc.Files.Keys);
-        var sshCommand = fixture.Hpc.Files[sshCommandPath];
-        Assert.Contains("NEW_HOME=\"/home/hpcuser/data/alpha\"", sshCommand);
+        Assert.Contains($"/home/hpcuser/data/{spaceName}", fixture.Hpc.Files[sshCommandPath]);
         Assert.Contains(sshCommandPath, fixture.Hpc.Executables);
 
         Assert.Contains("/home/hpcuser/.ssh/authorized_keys", fixture.Hpc.Files.Keys);
         var authorizedKeys = fixture.Hpc.Files["/home/hpcuser/.ssh/authorized_keys"];
-        Assert.Contains("alpha", authorizedKeys);
-        Assert.Contains("alice@example.com", authorizedKeys);
+        Assert.Contains(Key1, authorizedKeys);
 
-        Assert.Contains("/home/hpcuser/data/alpha/ssdfs", fixture.Hpc.SymbolicLinks.Keys);
-        Assert.Equal("/ssdfs/datahome/hpcuser/alpha", fixture.Hpc.SymbolicLinks["/home/hpcuser/data/alpha/ssdfs"]);
+        Assert.Contains($"/home/hpcuser/data/{spaceName}/ssdfs", fixture.Hpc.SymbolicLinks.Keys);
 
-        var token = ExtractAntiforgeryToken(homeHtml);
-        var deleteResp = await client.PostAsync(
-            "/?handler=Delete",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["__RequestVerificationToken"] = token,
-                ["name"] = "alpha",
-            }));
-        deleteResp.EnsureSuccessStatusCode();
+        var removeHtml = await RemoveKeyAsync(alice, Fp(Key1));
+        Assert.DoesNotContain(Fp(Key1), removeHtml);
 
-        var afterDeleteHtml = await GetHomeHtmlAsync(client);
-        Assert.DoesNotContain("alpha", afterDeleteHtml);
+        var afterRemove = fixture.Hpc.Files["/home/hpcuser/.ssh/authorized_keys"];
+        Assert.DoesNotContain(Key1, afterRemove);
     }
 
     [Fact]
-    public async Task User_cannot_see_another_users_space()
+    public async Task Users_have_independent_spaces()
     {
         var alice = await LoginAsync("alice");
-        await CreateSpaceAsync(alice, "bravo", "alice@example.com", TestKey);
+        await AddKeyAsync(alice, Key2);
 
         var bob = await LoginAsync("bob");
         var bobHtml = await GetHomeHtmlAsync(bob);
+        Assert.DoesNotContain(Fp(Key2), bobHtml);
 
-        Assert.DoesNotContain("bravo", bobHtml);
+        await AddKeyAsync(bob, Key3);
+
+        var authorizedKeys = fixture.Hpc.Files["/home/hpcuser/.ssh/authorized_keys"];
+        Assert.Contains(Key2, authorizedKeys);
+        Assert.Contains(Key3, authorizedKeys);
+        Assert.Contains($"/home/hpcuser/data/{SpaceName.FromSub("alice")}/.ssh-command", authorizedKeys);
+        Assert.Contains($"/home/hpcuser/data/{SpaceName.FromSub("bob")}/.ssh-command", authorizedKeys);
     }
 
-    [Fact]
-    public async Task Administrator_can_see_and_delete_other_users_space()
-    {
-        var alice = await LoginAsync("alice");
-        await CreateSpaceAsync(alice, "charlie", "alice@example.com", TestKey);
-
-        var administrator = await LoginAsync("administrator");
-        var administratorHtml = await GetAdministratorHtmlAsync(administrator);
-        Assert.Contains("charlie", administratorHtml);
-
-        var token = ExtractAntiforgeryToken(administratorHtml);
-        var deleteResp = await administrator.PostAsync(
-            "/administration?handler=Delete",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["__RequestVerificationToken"] = token,
-                ["name"] = "charlie",
-            }));
-        deleteResp.EnsureSuccessStatusCode();
-
-        var aliceHtml = await GetHomeHtmlAsync(alice);
-        Assert.DoesNotContain("charlie", aliceHtml);
-    }
-
-    [Fact]
-    public async Task Non_admin_cannot_access_admin_page()
-    {
-        var bob = await LoginAsync("bob");
-
-        var response = await bob.GetAsync("/administration");
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task Non_admin_cannot_delete_other_users_space()
-    {
-        var alice = await LoginAsync("alice");
-        await CreateSpaceAsync(alice, "delta", "alice@example.com", TestKey);
-
-        var bob = await LoginAsync("bob");
-        var bobHtml = await GetHomeHtmlAsync(bob);
-        var token = ExtractAntiforgeryToken(bobHtml);
-
-        var deleteResp = await bob.PostAsync(
-            "/?handler=Delete",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["__RequestVerificationToken"] = token,
-                ["name"] = "delta",
-            }));
-        deleteResp.EnsureSuccessStatusCode();
-
-        var aliceHtml = await GetHomeHtmlAsync(alice);
-        Assert.Contains("delta", aliceHtml);
-    }
-
-    private async Task<string> CreateSpaceAsync(HttpClient client, string name, string contact, string key)
+    private async Task<string> AddKeyAsync(HttpClient client, string key)
     {
         var html = await GetHomeHtmlAsync(client);
         var token = ExtractAntiforgeryToken(html);
 
-        var createResp = await client.PostAsync(
-            "/?handler=Create",
+        var resp = await client.PostAsync(
+            "/?handler=AddKey",
             new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
-                ["name"] = name,
-                ["contact"] = contact,
                 ["key"] = key,
             }));
-        createResp.EnsureSuccessStatusCode();
+        resp.EnsureSuccessStatusCode();
 
-        return await createResp.Content.ReadAsStringAsync();
+        return await resp.Content.ReadAsStringAsync();
+    }
+
+    private async Task<string> RemoveKeyAsync(HttpClient client, string fingerprint)
+    {
+        var html = await GetHomeHtmlAsync(client);
+        var token = ExtractAntiforgeryToken(html);
+
+        var resp = await client.PostAsync(
+            "/?handler=RemoveKey",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["fingerprint"] = fingerprint,
+            }));
+        resp.EnsureSuccessStatusCode();
+
+        return await resp.Content.ReadAsStringAsync();
     }
 
     private async Task<string> GetHomeHtmlAsync(HttpClient client)
     {
         var response = await client.GetAsync("/");
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
-    }
-
-    private async Task<string> GetAdministratorHtmlAsync(HttpClient client)
-    {
-        var response = await client.GetAsync("/administration");
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }

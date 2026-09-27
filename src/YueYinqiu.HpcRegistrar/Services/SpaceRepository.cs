@@ -12,14 +12,10 @@ public sealed class SpaceRepository
         this.collection.EnsureIndex(ownership => ownership.Owner);
     }
 
-    public void Insert(SpaceOwnership ownership) => collection.Insert(ownership);
-
-    public SpaceOwnership? FindByName(string name) => collection.FindById(name);
-
-    public IEnumerable<SpaceOwnership> FindByOwner(string owner) =>
-        collection.Query().Where(ownership => ownership.Owner == owner).ToEnumerable();
+    public SpaceOwnership? FindByOwner(string owner) =>
+        collection.Query().Where(ownership => ownership.Owner == owner).FirstOrDefault();
 
     public IEnumerable<SpaceOwnership> FindAll() => collection.FindAll();
 
-    public bool Delete(string name) => collection.Delete(name);
+    public void Upsert(SpaceOwnership ownership) => collection.Upsert(ownership);
 }

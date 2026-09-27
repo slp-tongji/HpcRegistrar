@@ -17,7 +17,6 @@
         <h1>我的隔离空间（@Model.Title）</h1>
         <p>
             当前用户：<strong>@Model.UserName</strong>
-            <span>· <a href="/administration">管理员模式</a></span>
             <form method="post" action="/Account/Logout" style="display:inline">
                 <button type="submit">退出登录</button>
             </form>
@@ -32,45 +31,37 @@
             <div class="notice">@Model.Success</div>
         }
 
-        <h2>创建隔离空间</h2>
-        <form method="post" asp-page-handler="Create">
+        <h2>添加公钥</h2>
+        <form method="post" asp-page-handler="AddKey">
             @Html.AntiForgeryToken()
-            <label for="name">空间名称：</label>
-            <input id="name" name="name" placeholder="由字母、数字、下划线或减号组成，首位是字母，至少 4 个字符" required />
-            <label for="contact">联系方式：</label>
-            <input id="contact" name="contact" placeholder="用于遇到问题时及时联系" required />
             <label for="key">SSH 公钥：</label>
             <textarea id="key" name="key" rows="4" placeholder="ssh-ed25519 AAAA..." required></textarea>
-            <button type="submit">创建</button>
+            <button type="submit">添加</button>
         </form>
 
-        <h2>我的空间（@Model.Spaces.Count）</h2>
-        @if (Model.Spaces.Count == 0)
+        <h2>我的公钥（@(Model.Space?.Keys.Count ?? 0)）</h2>
+        @if (Model.Space is null || Model.Space.Keys.Count == 0)
         {
-            <p>暂无隔离空间。</p>
+            <p>你还没有添加任何公钥。</p>
         }
         else
         {
             <table>
                 <thead>
                     <tr>
-                        <th>名称</th>
                         <th>公钥指纹</th>
-                        <th>联系方式</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var space in Model.Spaces)
+                    @foreach (var key in Model.Space.Keys)
                     {
                         <tr>
-                            <td><code>@space.Name</code></td>
-                            <td><code>@space.Fingerprint</code></td>
-                            <td>@space.Contact</td>
+                            <td><code>@key.Fingerprint</code></td>
                             <td>
-                                <form method="post" asp-page-handler="Delete" onsubmit="return confirm('确认删除该隔离空间？');">
+                                <form method="post" asp-page-handler="RemoveKey" onsubmit="return confirm('确认删除该公钥？');">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="name" value="@space.Name" />
+                                    <input type="hidden" name="fingerprint" value="@key.Fingerprint" />
                                     <button type="submit" class="danger">删除</button>
                                 </form>
                             </td>

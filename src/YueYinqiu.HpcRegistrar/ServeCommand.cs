@@ -25,9 +25,6 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("data")]
     public required string Data { get; set; }
 
-    [CommandOption("administrator")]
-    public required string Administrator { get; set; }
-
     [CommandOption("oidc")]
     public required string Oidc { get; set; }
 
@@ -158,11 +155,7 @@ public sealed partial class ServeCommand : ICommand
                 }
             });
 
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy("Administrator", policy => policy.RequireAssertion(context =>
-                context.User.FindAll("groups").Any(claim => claim.Value == Administrator)));
-        });
+        builder.Services.AddAuthorization();
         builder.Services.AddRazorPages();
 
         builder.Services.Configure<ForwardedHeadersOptions>(options =>

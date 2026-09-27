@@ -97,6 +97,6 @@ public sealed class SpaceLayout
         # 详见 https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#ssh-%e4%b8%8d%e5%85%bc%e5%ae%b9
         """;
 
-    public string AuthorizedKeyLine(string key, string contact) =>
-        $"command=\"{SshCommand}\" {key} {contact}";
+    public string AuthorizedKeyLine(string key, string comment) =>
+        $"command=\"{SshCommand}\" {key} {comment}";
 }

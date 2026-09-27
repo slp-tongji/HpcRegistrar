@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,13 +13,21 @@ public sealed class IndexModel : PageModel
     private readonly AppOptions appOptions;
     private readonly IsolationSpaceService spaceService;
 
-    public string Owner => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+    public string Owner
+    {
+        get
+        {
+            var result = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Trace.Assert(result is not null);
+            return result;
+        }
+    }
 
     public string UserName => User.FindFirstValue("name") ?? Owner;
 
     public string Title => appOptions.Title;
 
-    public IReadOnlyList<SpaceOwnership> Spaces { get; private set; } = [];
+    public SpaceOwnership? Space { get; private set; }
 
     public string? Error { get; private set; }
 
@@ -30,22 +39,22 @@ public sealed class IndexModel : PageModel
         this.spaceService = spaceService;
     }
 
-    public void OnGet() => Spaces = [.. spaceService.ListOwn(Owner)];
+    public void OnGet() => Space = spaceService.FindOwn(Owner);
 
-    public async Task<IActionResult> OnPostCreateAsync(string name, string contact, string key, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostAddKeyAsync(string key, CancellationToken cancellationToken)
     {
-        Error = await spaceService.CreateAsync(name, contact, key, Owner, cancellationToken);
-        Success = Error is null ? "隔离空间已创建。" : null;
-        Spaces = [.. spaceService.ListOwn(Owner)];
+        Error = await spaceService.AddKeyAsync(Owner, UserName, key, cancellationToken);
+        Success = Error is null ? "公钥已添加。" : null;
+        Space = spaceService.FindOwn(Owner);
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(string name, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostRemoveKeyAsync(string fingerprint, CancellationToken cancellationToken)
     {
-        var deleted = await spaceService.DeleteOwnAsync(name, Owner, cancellationToken);
-        Error = deleted ? null : "删除失败：没有权限，或该空间不存在。";
-        Success = deleted ? "隔离空间已删除。" : null;
-        Spaces = [.. spaceService.ListOwn(Owner)];
+        var removed = await spaceService.RemoveKeyAsync(Owner, fingerprint, cancellationToken);
+        Error = removed ? null : "删除失败：该公钥不存在。";
+        Success = removed ? "公钥已删除。" : null;
+        Space = spaceService.FindOwn(Owner);
         return Page();
     }
 }

@@ -17,7 +17,6 @@ var users = new List<MockUser>
 {
     new("alice", "Alice", Array.Empty<string>()),
     new("bob", "Bob", Array.Empty<string>()),
-    new("administrator", "Administrator", new[] { "administrator" }),
 };
 
 using var certificate = TestCertificate.Create(dataDirectory);
@@ -31,7 +30,6 @@ var app = new ServeCommand
 {
     Listen = listen,
     Data = dataDirectory,
-    Administrator = "administrator",
     Title = "测试平台",
     Oidc = oidcUrl,
     OidcId = "test-client",

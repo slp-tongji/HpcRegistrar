@@ -1,73 +1,64 @@
-using System.Text.RegularExpressions;
-
 namespace YueYinqiu.HpcRegistrar.Services;
 
 public sealed class IsolationSpaceService(IHpcClient hpc, SpaceRepository repository, HpcOptions options)
 {
-    private static readonly Regex NamePattern = new("^[a-zA-Z][a-zA-Z0-9_-]{3,}$", RegexOptions.Compiled);
-
-    public async Task<string?> CreateAsync(string name, string contact, string key, string owner, CancellationToken cancellationToken = default)
+    public async Task<string?> AddKeyAsync(string sub, string displayName, string key, CancellationToken cancellationToken = default)
     {
-        name = name.Trim();
-        if (!NamePattern.IsMatch(name))
-        {
-            return "隔离空间名称应当由字母、数字、下划线或减号组成。首位只能是字母，最少四个字符。";
-        }
-
-        var figure = SshPublicKeyParser.GetFingerprint(key);
-        if (figure is null)
+        var fingerprint = SshPublicKeyParser.GetFingerprint(key);
+        if (fingerprint is null)
         {
             return "无法解析该公钥，请重新输入。";
         }
 
-        if (repository.FindByName(name) is not null)
+        var layout = new SpaceLayout(options, SpaceName.FromSub(sub));
+        var space = repository.FindByOwner(sub);
+
+        if (space is null)
         {
-            return "该名称的隔离空间已存在。";
+            if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
+            {
+                await CreateSpaceFilesAsync(layout, cancellationToken);
+            }
+            space = new SpaceOwnership(layout.Name, sub, []);
+        }
+        else if (space.Keys.Any(k => k.Fingerprint == fingerprint))
+        {
+            return "该公钥已存在。";
         }
 
-        var layout = new SpaceLayout(options, name);
-
-        if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
-        {
-            await CreateSpaceFilesAsync(layout, cancellationToken);
-        }
-
-        var keyLine = layout.AuthorizedKeyLine(key, contact);
+        var keyLine = layout.AuthorizedKeyLine(key, displayName);
         await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, keyLine, cancellationToken);
 
-        repository.Insert(new SpaceOwnership(name, owner, contact, figure, key, keyLine));
+        space = space with { Keys = [.. space.Keys, new SpaceKey(fingerprint, key, keyLine)] };
+        repository.Upsert(space);
+
         return null;
     }
 
-    public async Task<bool> DeleteOwnAsync(string name, string owner, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveKeyAsync(string sub, string fingerprint, CancellationToken cancellationToken = default)
     {
-        var ownership = repository.FindByName(name);
-        if (ownership is null || ownership.Owner != owner)
+        var space = repository.FindByOwner(sub);
+        if (space is null)
         {
             return false;
         }
 
-        return await DeleteAnyAsync(name, cancellationToken);
-    }
-
-    public async Task<bool> DeleteAnyAsync(string name, CancellationToken cancellationToken = default)
-    {
-        var ownership = repository.FindByName(name);
-        if (ownership is null)
+        var key = space.Keys.FirstOrDefault(k => k.Fingerprint == fingerprint);
+        if (key is null)
         {
             return false;
         }
 
-        var layout = new SpaceLayout(options, name);
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, ownership.KeyLine, cancellationToken);
+        var layout = new SpaceLayout(options, space.Name);
+        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, key.KeyLine, cancellationToken);
 
-        repository.Delete(name);
+        space = space with { Keys = space.Keys.Where(k => k.Fingerprint != fingerprint).ToList() };
+        repository.Upsert(space);
+
         return true;
     }
 
-    public IEnumerable<SpaceOwnership> ListOwn(string owner) => repository.FindByOwner(owner);
-
-    public IEnumerable<SpaceOwnership> ListAll() => repository.FindAll();
+    public SpaceOwnership? FindOwn(string sub) => repository.FindByOwner(sub);
 
     private async Task CreateSpaceFilesAsync(SpaceLayout layout, CancellationToken cancellationToken)
     {

@@ -2,11 +2,17 @@ namespace YueYinqiu.HpcRegistrar.Services;
 
 public sealed class SpaceLayout
 {
+    public const string HomeRoot = "/share/home";
+
+    public const string SsdfsDataHome = "/ssdfs/datahome";
+
     public HpcOptions Options { get; }
 
     public string Name { get; }
 
     public string Username { get; }
+
+    public string Home { get; }
 
     public string Space { get; }
 
@@ -20,11 +26,12 @@ public sealed class SpaceLayout
     {
         Options = options;
         Name = name;
-        Username = Path.GetFileName(options.Home.TrimEnd('/'));
-        Space = Path.Combine(options.Home, "data", name);
-        Ssdfs = Path.Combine(options.SsdfsDataHome, Username, name);
+        Username = options.Username;
+        Home = Path.Combine(HomeRoot, Username);
+        Space = Path.Combine(Home, "data", name);
+        Ssdfs = Path.Combine(SsdfsDataHome, Username, name);
         SshCommand = Path.Combine(Space, ".ssh-command");
-        AuthorizedKeys = Path.Combine(options.Home, ".ssh", "authorized_keys");
+        AuthorizedKeys = Path.Combine(Home, ".ssh", "authorized_keys");
     }
 
     public string SshCommandContent() =>
@@ -74,7 +81,7 @@ public sealed class SpaceLayout
         export PATH
 
         # User specific aliases and functions
-        export HOME_ORIGINAL="{{Options.Home}}"
+        export HOME_ORIGINAL="{{Home}}"
 
         # ===== tmux =====
         # https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#tmux-%e4%b8%8d%e5%85%bc%e5%ae%b9

@@ -42,12 +42,6 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("hpc-key")]
     public required FileInfo HpcKey { get; set; }
 
-    [CommandOption("hpc-home")]
-    public required string HpcHome { get; set; }
-
-    [CommandOption("hpc-ssdfs-root")]
-    public string HpcSsdfsRoot { get; set; } = HpcOptions.DefaultSsdfsDataHome;
-
     public async ValueTask ExecuteAsync(IConsole console)
     {
         await using var app = BuildApp();
@@ -62,7 +56,7 @@ public sealed partial class ServeCommand : ICommand
             Args = ["--urls", Listen],
         });
 
-        var hpcOptions = new HpcOptions(HpcHost, HpcPort, HpcUser, HpcKey, HpcHome, HpcSsdfsRoot);
+        var hpcOptions = new HpcOptions(HpcHost, HpcPort, HpcUser, HpcKey);
         var hpcClient = new SshNetHpcClient(hpcOptions);
 
         var spaceService = new IsolationSpaceService(hpcClient, hpcOptions);

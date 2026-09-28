@@ -12,8 +12,6 @@ public sealed class SpaceLayout(string username, string sub)
     public string Name { get; } = "s" + Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes(sub)).AsSpan(0, 8)).ToLowerInvariant();
 
-    public string Username => username;
-
     public string Home => Path.Combine(shareHome, username);
 
     public string Space => Path.Combine(Home, "data", Name);

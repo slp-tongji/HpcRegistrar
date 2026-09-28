@@ -72,4 +72,4 @@ nix develop --command dotnet run -- \
 
 ---
 
-All documentation and `description` fields in this repository are AI-generated.
+All documentation in this repository is AI-generated.

@@ -67,7 +67,7 @@ public sealed class SshNetHpcClient : IDisposable
             $$"""
             flock -x "$1".lock \
                 bash -c \
-                    'grep -vF -- "$2" "$1" > "$1".tmp && mv "$1".tmp "$1"' \
+                    'grep -vxF -- "$2" "$1" > "$1".tmp; mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],

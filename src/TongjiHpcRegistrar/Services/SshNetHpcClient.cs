@@ -59,7 +59,7 @@ public sealed class SshNetHpcClient : IDisposable
             $$"""
             flock -x "$1".lock \
                 bash -c \
-                    'printf "%s\n" "$2" > "$1".tmp; [ -f "$1" ] && cat "$1" >> "$1".tmp; mv "$1".tmp "$1"' \
+                    'printf "%s\n" "$2" > "$1".tmp && cat "$1" >> "$1".tmp && chmod 644 "$1".tmp && mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],
@@ -70,7 +70,7 @@ public sealed class SshNetHpcClient : IDisposable
             $$"""
             flock -x "$1".lock \
                 bash -c \
-                    'grep -vxF -- "$2" "$1" > "$1".tmp; mv "$1".tmp "$1"' \
+                    'grep -vxF -- "$2" "$1" > "$1".tmp && chmod 644 "$1".tmp && mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],

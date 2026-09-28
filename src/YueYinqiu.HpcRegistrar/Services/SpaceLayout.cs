@@ -24,7 +24,7 @@ public sealed class SpaceLayout(string username, string sub)
 
     public string AuthorizedKeys => Path.Combine(Home, ".ssh", "authorized_keys");
 
-    public string SshCommandContent() =>
+    public string SshCommandContent =>
         $$"""
         #!/bin/bash
 
@@ -40,12 +40,12 @@ public sealed class SpaceLayout(string username, string sub)
         fi
         """;
 
-    public string BashLogoutContent() =>
+    public string BashLogoutContent =>
         """
         # ~/.bash_logout
         """;
 
-    public string BashProfileContent() =>
+    public string BashProfileContent =>
         """
         # ~/.bash_profile
 
@@ -56,7 +56,7 @@ public sealed class SpaceLayout(string username, string sub)
         # User specific environment and startup programs
         """;
 
-    public string BashrcContent() =>
+    public string BashrcContent =>
         $$"""
         # ~/.bashrc
 
@@ -82,20 +82,17 @@ public sealed class SpaceLayout(string username, string sub)
         echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
         """;
 
-    public string SpaceAuthorizedKeysContent() =>
+    public string SpaceAuthorizedKeysContent =>
         $$"""
         # 请注意，本文件位于隔离空间中，不会在登录时起到作用。
         # 若要配置 authorized_keys ，应该使用 {{AuthorizedKeys}}
         """;
 
-    public string SpaceSshConfigContent() =>
+    public string SpaceSshConfigContent =>
         """
         # 请注意，本配置默认不会被使用。
         # 详见 https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#ssh-%e4%b8%8d%e5%85%bc%e5%ae%b9
         """;
 
     public string AuthorizedKeyPrefix => $"command=\"{SshCommand}\" ";
-
-    public string AuthorizedKeyLine(string key) =>
-        $"{AuthorizedKeyPrefix}{key}";
 }

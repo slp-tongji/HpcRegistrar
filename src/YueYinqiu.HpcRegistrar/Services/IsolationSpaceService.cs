@@ -20,7 +20,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
             await CreateSpaceFilesAsync(hpc, layout, cancellationToken);
         }
 
-        await hpc.AddAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
+        await hpc.AddAuthorizedKeyAsync(layout.AuthorizedKeys, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
         return null;
     }
 
@@ -28,7 +28,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
     {
         var layout = new SpaceLayout(username, sub);
         using var hpc = hpcFactory();
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(key), cancellationToken);
+        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, $"{layout.AuthorizedKeyPrefix}{key}", cancellationToken);
         return true;
     }
 
@@ -62,17 +62,17 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
     {
         await hpc.CreateDirectoryAsync(layout.Space, cancellationToken);
 
-        await hpc.WriteFileAsync(layout.SshCommand, layout.SshCommandContent(), cancellationToken);
+        await hpc.WriteFileAsync(layout.SshCommand, layout.SshCommandContent, cancellationToken);
         await hpc.SetExecutableAsync(layout.SshCommand, cancellationToken);
 
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_logout"), layout.BashLogoutContent(), cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_profile"), layout.BashProfileContent(), cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bashrc"), layout.BashrcContent(), cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_logout"), layout.BashLogoutContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_profile"), layout.BashProfileContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bashrc"), layout.BashrcContent, cancellationToken);
 
         var spaceSsh = Path.Combine(layout.Space, ".ssh");
         await hpc.CreateDirectoryAsync(spaceSsh, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "authorized_keys"), layout.SpaceAuthorizedKeysContent(), cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "config"), layout.SpaceSshConfigContent(), cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "authorized_keys"), layout.SpaceAuthorizedKeysContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "config"), layout.SpaceSshConfigContent, cancellationToken);
 
         await hpc.CreateDirectoryAsync(layout.Ssdfs, cancellationToken);
         await hpc.CreateSymbolicLinkAsync(Path.Combine(layout.Space, "ssdfs"), layout.Ssdfs, cancellationToken);

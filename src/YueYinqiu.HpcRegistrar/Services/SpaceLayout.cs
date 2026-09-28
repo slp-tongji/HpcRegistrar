@@ -9,24 +9,24 @@ public sealed class SpaceLayout(string username, string sub)
 
     private const string ssdfsDatahome = "/ssdfs/datahome";
 
-    public string Name { get; } = "s" + Convert.ToHexString(
+    public string SpaceName { get; } = "s" + Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes(sub)).AsSpan(0, 8)).ToLowerInvariant();
 
-    public string Home => Path.Combine(shareHome, username);
+    public string OriginalHomePath => Path.Combine(shareHome, username);
 
-    public string Space => Path.Combine(Home, "data", Name);
+    public string SpaceHomePath => Path.Combine(OriginalHomePath, "data", SpaceName);
 
-    public string Ssdfs => Path.Combine(ssdfsDatahome, username, Name);
+    public string SpaceSsdfsPath => Path.Combine(ssdfsDatahome, username, SpaceName);
 
-    public string SshCommand => Path.Combine(Space, ".hpc-isolation", "ssh-command.sh");
+    public string SshCommandPath => Path.Combine(SpaceHomePath, ".hpc-isolation", "ssh-command.sh");
 
-    public string AuthorizedKeys => Path.Combine(Home, ".ssh", "authorized_keys");
+    public string OriginalAuthorizedKeysPath => Path.Combine(OriginalHomePath, ".ssh", "authorized_keys");
 
     public string SshCommandContent =>
         $$"""
         #!/bin/bash
 
-        NEW_HOME="{{Space}}"
+        NEW_HOME="{{SpaceHomePath}}"
         NEW_ENV="HOME=$NEW_HOME TERM=$TERM SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
 
         cd $NEW_HOME
@@ -69,7 +69,7 @@ public sealed class SpaceLayout(string username, string sub)
         export PATH
 
         # User specific aliases and functions
-        export HOME_ORIGINAL="{{Home}}"
+        export HOME_ORIGINAL="{{OriginalHomePath}}"
 
         # ===== tmux =====
         # https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#tmux-%e4%b8%8d%e5%85%bc%e5%ae%b9
@@ -83,7 +83,7 @@ public sealed class SpaceLayout(string username, string sub)
     public string SpaceAuthorizedKeysContent =>
         $$"""
         # 请注意，本文件位于隔离空间中，不会在登录时起到作用。
-        # 若要配置 authorized_keys ，应该使用 {{AuthorizedKeys}}
+        # 若要配置 authorized_keys ，应该使用 {{OriginalAuthorizedKeysPath}}
         """;
 
     public string SpaceSshConfigContent =>
@@ -92,5 +92,5 @@ public sealed class SpaceLayout(string username, string sub)
         # 详见 https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#ssh-%e4%b8%8d%e5%85%bc%e5%ae%b9
         """;
 
-    public string AuthorizedKeyPrefix => $"command=\"{SshCommand}\" ";
+    public string AuthorizedKeyPrefix => $"command=\"{SshCommandPath}\" ";
 }

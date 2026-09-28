@@ -15,12 +15,12 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         var layout = new SpaceLayout(username, sub);
 
         using var hpc = hpcFactory();
-        if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
+        if (!await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
         {
             await CreateSpaceFilesAsync(hpc, layout, cancellationToken);
         }
 
-        await hpc.AddAuthorizedKeyAsync(layout.AuthorizedKeys, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
+        await hpc.AddAuthorizedKeyAsync(layout.OriginalAuthorizedKeysPath, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
         return null;
     }
 
@@ -28,7 +28,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
     {
         var layout = new SpaceLayout(username, sub);
         using var hpc = hpcFactory();
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, $"{layout.AuthorizedKeyPrefix}{key}", cancellationToken);
+        await hpc.RemoveAuthorizedKeyAsync(layout.OriginalAuthorizedKeysPath, $"{layout.AuthorizedKeyPrefix}{key}", cancellationToken);
         return true;
     }
 
@@ -36,12 +36,12 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
     {
         var layout = new SpaceLayout(username, sub);
         using var hpc = hpcFactory();
-        if (!await hpc.PathExistsAsync(layout.AuthorizedKeys, cancellationToken))
+        if (!await hpc.PathExistsAsync(layout.OriginalAuthorizedKeysPath, cancellationToken))
         {
             return [];
         }
 
-        var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
+        var content = await hpc.ReadFileAsync(layout.OriginalAuthorizedKeysPath, cancellationToken);
         var prefix = layout.AuthorizedKeyPrefix;
 
         var result = new List<AuthorizedKey>();
@@ -60,21 +60,21 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
 
     private async Task CreateSpaceFilesAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
     {
-        await hpc.CreateDirectoryAsync(layout.Space, cancellationToken);
+        await hpc.CreateDirectoryAsync(layout.SpaceHomePath, cancellationToken);
 
-        await hpc.WriteFileAsync(layout.SshCommand, layout.SshCommandContent, cancellationToken);
-        await hpc.SetExecutableAsync(layout.SshCommand, cancellationToken);
+        await hpc.WriteFileAsync(layout.SshCommandPath, layout.SshCommandContent, cancellationToken);
+        await hpc.SetExecutableAsync(layout.SshCommandPath, cancellationToken);
 
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_logout"), layout.BashLogoutContent, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bash_profile"), layout.BashProfileContent, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.Space, ".bashrc"), layout.BashrcContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bash_logout"), layout.BashLogoutContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bash_profile"), layout.BashProfileContent, cancellationToken);
+        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bashrc"), layout.BashrcContent, cancellationToken);
 
-        var spaceSsh = Path.Combine(layout.Space, ".ssh");
+        var spaceSsh = Path.Combine(layout.SpaceHomePath, ".ssh");
         await hpc.CreateDirectoryAsync(spaceSsh, cancellationToken);
         await hpc.WriteFileAsync(Path.Combine(spaceSsh, "authorized_keys"), layout.SpaceAuthorizedKeysContent, cancellationToken);
         await hpc.WriteFileAsync(Path.Combine(spaceSsh, "config"), layout.SpaceSshConfigContent, cancellationToken);
 
-        await hpc.CreateDirectoryAsync(layout.Ssdfs, cancellationToken);
-        await hpc.CreateSymbolicLinkAsync(Path.Combine(layout.Space, "ssdfs"), layout.Ssdfs, cancellationToken);
+        await hpc.CreateDirectoryAsync(layout.SpaceSsdfsPath, cancellationToken);
+        await hpc.CreateSymbolicLinkAsync(Path.Combine(layout.SpaceHomePath, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
     }
 }

@@ -2,7 +2,7 @@ namespace YueYinqiu.HpcRegistrar.Services;
 
 public sealed record AuthorizedKey(string Key);
 
-public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
+public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, string username)
 {
     public async Task<string?> AddKeyAsync(string sub, string key, CancellationToken cancellationToken = default)
     {
@@ -14,9 +14,10 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
 
         var layout = new SpaceLayout(username, sub);
 
+        using var hpc = hpcFactory();
         if (!await hpc.PathExistsAsync(layout.Space, cancellationToken))
         {
-            await CreateSpaceFilesAsync(layout, cancellationToken);
+            await CreateSpaceFilesAsync(hpc, layout, cancellationToken);
         }
 
         await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
@@ -32,6 +33,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
         }
 
         var layout = new SpaceLayout(username, sub);
+        using var hpc = hpcFactory();
         await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
         return true;
     }
@@ -39,6 +41,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
     public async Task<IReadOnlyList<AuthorizedKey>> ListKeysAsync(string sub, CancellationToken cancellationToken = default)
     {
         var layout = new SpaceLayout(username, sub);
+        using var hpc = hpcFactory();
         var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
         var prefix = $"command=\"{layout.SshCommand}\" ";
 
@@ -61,7 +64,7 @@ public sealed class IsolationSpaceService(SshNetHpcClient hpc, string username)
         return result;
     }
 
-    private async Task CreateSpaceFilesAsync(SpaceLayout layout, CancellationToken cancellationToken)
+    private async Task CreateSpaceFilesAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
     {
         await hpc.CreateDirectoryAsync(layout.Space, cancellationToken);
 

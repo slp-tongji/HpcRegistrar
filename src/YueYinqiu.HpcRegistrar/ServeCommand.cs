@@ -56,9 +56,9 @@ public sealed partial class ServeCommand : ICommand
             Args = ["--urls", Listen],
         });
 
-        var hpcClient = new SshNetHpcClient(HpcHost, HpcPort, HpcUser, HpcKey);
-
-        var spaceService = new IsolationSpaceService(hpcClient, HpcUser);
+        var spaceService = new IsolationSpaceService(
+            () => new SshNetHpcClient(HpcHost, HpcPort, HpcUser, HpcKey),
+            HpcUser);
 
         builder.Services.AddSingleton(spaceService);
 

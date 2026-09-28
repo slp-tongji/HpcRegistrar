@@ -3,8 +3,24 @@ using Renci.SshNet;
 
 namespace YueYinqiu.HpcRegistrar.Services;
 
-public sealed class SshNetHpcClient(string host, int port, string username, FileInfo privateKeyPath)
+public sealed class SshNetHpcClient : IDisposable
 {
+    private readonly SshClient client;
+
+    public SshNetHpcClient(string host, int port, string username, FileInfo privateKeyPath)
+    {
+        var privateKey = new PrivateKeyFile(privateKeyPath.FullName);
+        var connectionInfo = new Renci.SshNet.ConnectionInfo(
+            host,
+            port,
+            username,
+            new PrivateKeyAuthenticationMethod(username, privateKey));
+        client = new SshClient(connectionInfo);
+        client.Connect();
+    }
+
+    public void Dispose() => client.Dispose();
+
     public async Task<bool> PathExistsAsync(string path, CancellationToken cancellationToken = default)
     {
         var (status, _) = await RunAsync($"test -e {ShellQuote(path)}", cancellationToken);
@@ -68,7 +84,6 @@ public sealed class SshNetHpcClient(string host, int port, string username, File
 
     private async Task<(int? Status, string Output)> RunAsync(string command, CancellationToken cancellationToken)
     {
-        using var client = CreateConnectedClient();
         using var cmd = client.CreateCommand(command);
         await cmd.ExecuteAsync(cancellationToken);
         var output = string.Concat(cmd.Result, cmd.Error);
@@ -82,19 +97,6 @@ public sealed class SshNetHpcClient(string host, int port, string username, File
         {
             throw new InvalidOperationException($"HPC 命令执行失败（退出码 {status?.ToString() ?? "未知"}）：{output}");
         }
-    }
-
-    private SshClient CreateConnectedClient()
-    {
-        var privateKey = new PrivateKeyFile(privateKeyPath.FullName);
-        var connectionInfo = new Renci.SshNet.ConnectionInfo(
-            host,
-            port,
-            username,
-            new PrivateKeyAuthenticationMethod(username, privateKey));
-        var client = new SshClient(connectionInfo);
-        client.Connect();
-        return client;
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";

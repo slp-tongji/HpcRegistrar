@@ -30,7 +30,12 @@ public sealed class SshNetHpcClient : IDisposable
 
     public async Task<string> ReadFileAsync(string path, CancellationToken cancellationToken = default)
     {
-        var (_, output) = await RunAsync("cat \"$1\" 2>/dev/null", [path], cancellationToken);
+        var (status, output) = await RunAsync("cat \"$1\"", [path], cancellationToken);
+        if (status != 0)
+        {
+            throw new InvalidOperationException($"读取文件失败（退出码 {status?.ToString() ?? "未知"}）：{output}");
+        }
+
         return output;
     }
 

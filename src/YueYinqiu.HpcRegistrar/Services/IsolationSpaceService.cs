@@ -42,6 +42,11 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
     {
         var layout = new SpaceLayout(username, sub);
         using var hpc = hpcFactory();
+        if (!await hpc.PathExistsAsync(layout.AuthorizedKeys, cancellationToken))
+        {
+            return [];
+        }
+
         var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
         var prefix = $"command=\"{layout.SshCommand}\" ";
 

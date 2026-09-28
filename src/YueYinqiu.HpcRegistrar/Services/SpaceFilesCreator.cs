@@ -4,29 +4,29 @@ public static class SpaceFilesCreator
 {
     public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
     {
-        if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken)
-            && !await hpc.PathExistsAsync(layout.BrokenMarkerPath, cancellationToken))
+        if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
         {
             return;
         }
 
-        await hpc.WriteFileAsync(layout.BrokenMarkerPath, "", cancellationToken);
-        await hpc.CreateDirectoryAsync(layout.SpaceHomePath, cancellationToken);
+        var tempRoot = layout.SpaceHomePath + ".tmp." + Guid.NewGuid().ToString("N");
+        await hpc.CreateDirectoryAsync(tempRoot, cancellationToken);
 
-        await WriteSshCommandAsync(hpc, layout, cancellationToken);
-        await WriteBashLogoutAsync(hpc, layout, cancellationToken);
-        await WriteBashProfileAsync(hpc, layout, cancellationToken);
-        await WriteBashrcAsync(hpc, layout, cancellationToken);
-        await WriteSpaceSshAsync(hpc, layout, cancellationToken);
-        await CreateSsdfsAsync(hpc, layout, cancellationToken);
+        await WriteSshCommandAsync(hpc, layout, tempRoot, cancellationToken);
+        await WriteBashLogoutAsync(hpc, layout, tempRoot, cancellationToken);
+        await WriteBashProfileAsync(hpc, layout, tempRoot, cancellationToken);
+        await WriteBashrcAsync(hpc, layout, tempRoot, cancellationToken);
+        await WriteSpaceSshAsync(hpc, layout, tempRoot, cancellationToken);
+        await CreateSsdfsAsync(hpc, layout, tempRoot, cancellationToken);
 
-        await hpc.RemoveFileAsync(layout.BrokenMarkerPath, cancellationToken);
+        await hpc.MoveAsync(tempRoot, layout.SpaceHomePath, cancellationToken);
     }
 
-    private static async Task WriteSshCommandAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
+    private static async Task WriteSshCommandAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
     {
+        var target = Path.Combine(targetRoot, ".hpc-isolation", "ssh-command.sh");
         await hpc.WriteFileAsync(
-            layout.SshCommandPath,
+            target,
             $$"""
             #!/bin/bash
 
@@ -42,20 +42,20 @@ public static class SpaceFilesCreator
             fi
             """,
             cancellationToken);
-        await hpc.SetExecutableAsync(layout.SshCommandPath, cancellationToken);
+        await hpc.SetExecutableAsync(target, cancellationToken);
     }
 
-    private static async Task WriteBashLogoutAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken) =>
+    private static async Task WriteBashLogoutAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken) =>
         await hpc.WriteFileAsync(
-            Path.Combine(layout.SpaceHomePath, ".bash_logout"),
+            Path.Combine(targetRoot, ".bash_logout"),
             """
             # ~/.bash_logout
             """,
             cancellationToken);
 
-    private static async Task WriteBashProfileAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken) =>
+    private static async Task WriteBashProfileAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken) =>
         await hpc.WriteFileAsync(
-            Path.Combine(layout.SpaceHomePath, ".bash_profile"),
+            Path.Combine(targetRoot, ".bash_profile"),
             """
             # ~/.bash_profile
 
@@ -67,9 +67,9 @@ public static class SpaceFilesCreator
             """,
             cancellationToken);
 
-    private static async Task WriteBashrcAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken) =>
+    private static async Task WriteBashrcAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken) =>
         await hpc.WriteFileAsync(
-            Path.Combine(layout.SpaceHomePath, ".bashrc"),
+            Path.Combine(targetRoot, ".bashrc"),
             $$"""
             # ~/.bashrc
 
@@ -96,9 +96,9 @@ public static class SpaceFilesCreator
             """,
             cancellationToken);
 
-    private static async Task WriteSpaceSshAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
+    private static async Task WriteSpaceSshAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
     {
-        var spaceSsh = Path.Combine(layout.SpaceHomePath, ".ssh");
+        var spaceSsh = Path.Combine(targetRoot, ".ssh");
         await hpc.CreateDirectoryAsync(spaceSsh, cancellationToken);
         await hpc.WriteFileAsync(
             Path.Combine(spaceSsh, "authorized_keys"),
@@ -116,9 +116,9 @@ public static class SpaceFilesCreator
             cancellationToken);
     }
 
-    private static async Task CreateSsdfsAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
+    private static async Task CreateSsdfsAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
     {
         await hpc.CreateDirectoryAsync(layout.SpaceSsdfsPath, cancellationToken);
-        await hpc.CreateSymbolicLinkAsync(Path.Combine(layout.SpaceHomePath, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
+        await hpc.CreateSymbolicLinkAsync(Path.Combine(targetRoot, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
     }
 }

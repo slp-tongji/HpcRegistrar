@@ -60,7 +60,7 @@ nix develop --command dotnet run -- \
 ### 部署前提
 
 1. **`.ssh` 目录与 `authorized_keys` 必须预先创建**。注册器假设 `/share/home/<user>/.ssh/authorized_keys` 已存在；若不存在，添加/删除会失败。文件权限 644（sshd 的 `StrictModes` 可接受，如需 0600 请在部署侧设置）。
-2. **`--hpc-host-key` 格式**：必须大写、去掉 `SHA256:` 前缀（与 SSH.NET 的 `FingerPrintSHA256` 逐字节比较）。可从 `ssh-keyscan` 或 `ssh-keygen -lf` 的结果中提取。
+2. **`--hpc-host-key` 格式**：SHA256 指纹的 base64 编码（区分大小写），去掉 `SHA256:` 前缀、去掉末尾的 `=`（与 SSH.NET 的 `FingerPrintSHA256` 逐字节比较）。可从 `ssh-keygen -lf <host>.pub` 或 `ssh-keyscan` 的结果中提取。
 3. **`--hpc-user` 只能包含 `[a-zA-Z0-9._-]` 且不能为空**。它会被用作 SSH 用户名、文件系统路径，并嵌入 `authorized_keys` 的 `command=` 选项（该值最终由 `shell -c` 执行），特殊字符会破坏这些格式甚至导致命令注入。不满足时启动即报错。
 
 ## 安全说明

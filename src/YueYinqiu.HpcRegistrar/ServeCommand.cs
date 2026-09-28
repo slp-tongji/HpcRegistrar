@@ -42,6 +42,9 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("hpc-key")]
     public required FileInfo HpcKey { get; set; }
 
+    [CommandOption("hpc-host-key")]
+    public required string HpcHostKey { get; set; }
+
     public async ValueTask ExecuteAsync(IConsole console)
     {
         await using var app = BuildApp();
@@ -57,7 +60,7 @@ public sealed partial class ServeCommand : ICommand
         });
 
         var spaceService = new IsolationSpaceService(
-            () => new SshNetHpcClient(HpcHost, HpcPort, HpcUser, HpcKey),
+            () => new SshNetHpcClient(HpcHost, HpcPort, HpcUser, HpcKey, HpcHostKey),
             HpcUser);
 
         builder.Services.AddSingleton(spaceService);

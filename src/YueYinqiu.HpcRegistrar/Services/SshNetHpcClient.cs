@@ -7,7 +7,7 @@ public sealed class SshNetHpcClient : IDisposable
 {
     private readonly SshClient client;
 
-    public SshNetHpcClient(string host, int port, string username, FileInfo privateKeyPath)
+    public SshNetHpcClient(string host, int port, string username, FileInfo privateKeyPath, string hostKeyFingerprint)
     {
         var privateKey = new PrivateKeyFile(privateKeyPath.FullName);
         var connectionInfo = new Renci.SshNet.ConnectionInfo(
@@ -16,6 +16,7 @@ public sealed class SshNetHpcClient : IDisposable
             username,
             new PrivateKeyAuthenticationMethod(username, privateKey));
         client = new SshClient(connectionInfo);
+        client.HostKeyReceived += (_, e) => e.CanTrust = e.FingerPrintSHA256 == hostKeyFingerprint;
         client.Connect();
     }
 

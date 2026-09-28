@@ -17,7 +17,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         using var hpc = hpcFactory();
         if (!await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
         {
-            await CreateSpaceFilesAsync(hpc, layout, cancellationToken);
+            await SpaceFilesCreator.CreateAsync(hpc, layout, cancellationToken);
         }
 
         await hpc.AddAuthorizedKeyAsync(layout.OriginalAuthorizedKeysPath, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
@@ -56,25 +56,5 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         }
 
         return result;
-    }
-
-    private async Task CreateSpaceFilesAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)
-    {
-        await hpc.CreateDirectoryAsync(layout.SpaceHomePath, cancellationToken);
-
-        await hpc.WriteFileAsync(layout.SshCommandPath, layout.SshCommandContent, cancellationToken);
-        await hpc.SetExecutableAsync(layout.SshCommandPath, cancellationToken);
-
-        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bash_logout"), layout.BashLogoutContent, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bash_profile"), layout.BashProfileContent, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(layout.SpaceHomePath, ".bashrc"), layout.BashrcContent, cancellationToken);
-
-        var spaceSsh = Path.Combine(layout.SpaceHomePath, ".ssh");
-        await hpc.CreateDirectoryAsync(spaceSsh, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "authorized_keys"), layout.SpaceAuthorizedKeysContent, cancellationToken);
-        await hpc.WriteFileAsync(Path.Combine(spaceSsh, "config"), layout.SpaceSshConfigContent, cancellationToken);
-
-        await hpc.CreateDirectoryAsync(layout.SpaceSsdfsPath, cancellationToken);
-        await hpc.CreateSymbolicLinkAsync(Path.Combine(layout.SpaceHomePath, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
     }
 }

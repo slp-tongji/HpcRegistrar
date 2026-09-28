@@ -6,7 +6,7 @@ public static class SshPublicKeyParser
 {
     public static string? Normalize(string keyLine)
     {
-        var parts = keyLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = keyLine.Split((char[]?)null, 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length < 2 || !IsKnownType(parts[0]))
         {
             return null;

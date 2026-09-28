@@ -69,3 +69,7 @@ nix develop --command dotnet run -- \
 - `command=` 的值经白名单校验（`[a-zA-Z0-9._-]`），防止 shell 元字符注入与路径逃逸。
 - 删除公钥用 `grep -vxF` 整行精确匹配，前缀含唯一的空间路径，避免越权删他人行。
 - 前端启用 antiforgery token（CSRF 防护），Razor 默认 HTML 编码（XSS 防护）。
+
+---
+
+All documentation and `description` fields in this repository are AI-generated.

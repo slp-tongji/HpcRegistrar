@@ -22,5 +22,7 @@ public sealed class SpaceLayout(string username, string sub)
 
     public string OriginalAuthorizedKeysPath => Path.Combine(OriginalHomePath, ".ssh", "authorized_keys");
 
+    public string BrokenMarkerPath => SpaceHomePath + ".broken";
+
     public string AuthorizedKeyPrefix => $"command=\"{SshCommandPath}\" ";
 }

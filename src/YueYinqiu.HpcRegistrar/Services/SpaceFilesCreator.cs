@@ -4,11 +4,13 @@ public static class SpaceFilesCreator
 {
     public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
     {
-        if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
+        if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken)
+            && !await hpc.PathExistsAsync(layout.BrokenMarkerPath, cancellationToken))
         {
             return;
         }
 
+        await hpc.WriteFileAsync(layout.BrokenMarkerPath, "", cancellationToken);
         await hpc.CreateDirectoryAsync(layout.SpaceHomePath, cancellationToken);
 
         await WriteSshCommandAsync(hpc, layout, cancellationToken);
@@ -17,6 +19,8 @@ public static class SpaceFilesCreator
         await WriteBashrcAsync(hpc, layout, cancellationToken);
         await WriteSpaceSshAsync(hpc, layout, cancellationToken);
         await CreateSsdfsAsync(hpc, layout, cancellationToken);
+
+        await hpc.RemoveFileAsync(layout.BrokenMarkerPath, cancellationToken);
     }
 
     private static async Task WriteSshCommandAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken)

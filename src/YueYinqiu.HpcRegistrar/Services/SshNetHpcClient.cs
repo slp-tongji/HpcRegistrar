@@ -51,6 +51,9 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync("ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);
 
+    public async Task RemoveFileAsync(string path, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync("rm -f \"$1\"", [path], cancellationToken);
+
     public async Task AddAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""

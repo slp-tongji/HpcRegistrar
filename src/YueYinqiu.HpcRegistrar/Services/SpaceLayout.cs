@@ -94,6 +94,8 @@ public sealed class SpaceLayout(string username, string sub)
         # 详见 https://tjslp-hpc.yueyinqiu.top/docs/quick-start/create-isolation-space/#ssh-%e4%b8%8d%e5%85%bc%e5%ae%b9
         """;
 
+    public string AuthorizedKeyPrefix => $"command=\"{SshCommand}\" ";
+
     public string AuthorizedKeyLine(string key) =>
-        $"command=\"{SshCommand}\" {key}";
+        $"{AuthorizedKeyPrefix}{key}";
 }

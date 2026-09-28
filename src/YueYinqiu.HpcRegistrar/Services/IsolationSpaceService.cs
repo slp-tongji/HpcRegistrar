@@ -48,7 +48,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         }
 
         var content = await hpc.ReadFileAsync(layout.AuthorizedKeys, cancellationToken);
-        var prefix = $"command=\"{layout.SshCommand}\" ";
+        var prefix = layout.AuthorizedKeyPrefix;
 
         var result = new List<AuthorizedKey>();
         foreach (var line in content.Split('\n'))

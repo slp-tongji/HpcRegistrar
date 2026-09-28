@@ -1,5 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/HpcRegistrar/HpcRegistrar.csproj" />
+    <Project Path="src/TongjiHpcRegistrar/TongjiHpcRegistrar.csproj" />
   </Folder>
 </Solution>

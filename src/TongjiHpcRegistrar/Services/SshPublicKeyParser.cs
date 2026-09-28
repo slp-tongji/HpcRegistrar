@@ -1,4 +1,4 @@
-namespace HpcRegistrar.Services;
+namespace TongjiHpcRegistrar.Services;
 
 using System.Buffers;
 

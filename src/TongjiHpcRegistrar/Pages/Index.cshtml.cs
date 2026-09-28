@@ -3,9 +3,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using HpcRegistrar.Services;
+using TongjiHpcRegistrar.Services;
 
-namespace HpcRegistrar.Pages;
+namespace TongjiHpcRegistrar.Pages;
 
 [Authorize]
 public sealed class IndexModel : PageModel

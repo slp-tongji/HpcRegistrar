@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Diagnostics;
 
-namespace HpcRegistrar.Services;
+namespace TongjiHpcRegistrar.Services;
 
 public static class SpaceFilesCreator
 {

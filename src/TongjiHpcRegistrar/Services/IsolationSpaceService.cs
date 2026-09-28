@@ -1,4 +1,4 @@
-namespace HpcRegistrar.Services;
+namespace TongjiHpcRegistrar.Services;
 
 public sealed record AuthorizedKey(string Key);
 

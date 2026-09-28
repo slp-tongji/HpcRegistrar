@@ -1,7 +1,7 @@
 using System.Text;
 using Renci.SshNet;
 
-namespace HpcRegistrar.Services;
+namespace TongjiHpcRegistrar.Services;
 
 public sealed class SshNetHpcClient : IDisposable
 {

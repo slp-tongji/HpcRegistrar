@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace HpcRegistrar.Services;
+namespace TongjiHpcRegistrar.Services;
 
 public sealed class SpaceLayout
 {

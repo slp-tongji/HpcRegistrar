@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using HpcRegistrar.Services;
+using TongjiHpcRegistrar.Services;
 
-namespace HpcRegistrar;
+namespace TongjiHpcRegistrar;
 
 [Command]
 public sealed partial class ServeCommand : ICommand

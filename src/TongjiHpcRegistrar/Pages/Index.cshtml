@@ -1,8 +1,8 @@
 @page "/"
-@using HpcRegistrar.Services
-@model HpcRegistrar.Pages.IndexModel
+@using TongjiHpcRegistrar.Services
+@model TongjiHpcRegistrar.Pages.IndexModel
 @{
-    ViewData["Title"] = "Hpc Registrar";
+    ViewData["Title"] = "Tongji Hpc Registrar";
 }
 <!doctype html>
 <html lang="zh">
@@ -14,7 +14,7 @@
 </head>
 <body>
     <main>
-        <h1>Hpc Registrar</h1>
+        <h1>Tongji Hpc Registrar</h1>
         <p>
             当前用户：<strong>@Model.UserName</strong>
             <form method="post" action="/Account/Logout" style="display:inline">

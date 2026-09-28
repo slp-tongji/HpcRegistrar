@@ -92,7 +92,7 @@ public static class SpaceFilesCreator
             # User specific aliases and functions
 
             # ===== tmux =====
-            export TMUX_TMPDIR="/tmp/tmux-????/{{layout.SpaceName}}/default"
+            export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}"/default"
             mkdir -p "$TMUX_TMPDIR"
             # ===== tmux =====
 

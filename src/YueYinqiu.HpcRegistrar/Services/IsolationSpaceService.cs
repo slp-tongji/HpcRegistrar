@@ -26,15 +26,9 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
 
     public async Task<bool> RemoveKeyAsync(string sub, string key, CancellationToken cancellationToken = default)
     {
-        var normalized = SshPublicKeyParser.Normalize(key);
-        if (normalized is null)
-        {
-            return false;
-        }
-
         var layout = new SpaceLayout(username, sub);
         using var hpc = hpcFactory();
-        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
+        await hpc.RemoveAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(key), cancellationToken);
         return true;
     }
 
@@ -53,17 +47,12 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         var result = new List<AuthorizedKey>();
         foreach (var line in content.Split('\n'))
         {
-            var trimmed = line.TrimEnd('\r');
-            if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+            if (!line.StartsWith(prefix, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            var normalized = SshPublicKeyParser.Normalize(trimmed[prefix.Length..]);
-            if (normalized is not null)
-            {
-                result.Add(new AuthorizedKey(normalized));
-            }
+            result.Add(new AuthorizedKey(line[prefix.Length..]));
         }
 
         return result;

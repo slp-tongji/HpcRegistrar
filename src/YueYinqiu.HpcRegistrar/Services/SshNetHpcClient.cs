@@ -51,22 +51,18 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync("ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);
 
-    public async Task AppendAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
+    public async Task AddAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
-            $"""
-            ( flock -x 200
-              grep -qF -- "$2" "$1" || printf '%s\n' "$2" >> "$1"
-            ) 200>>"$1"
+            $$"""
+            flock -x 200 bash -c 'printf "%s\n" "$2" > "$1".tmp; [ -f "$1" ] && cat "$1" >> "$1".tmp; mv "$1".tmp "$1"' _ "$1" "$2" 200>>"$1"
             """,
             [authorizedKeysPath, keyLine],
             cancellationToken);
 
     public async Task RemoveAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
-            $"""
-            ( flock -x 200
-              grep -vF -- "$2" "$1" > "$1".tmp && mv "$1".tmp "$1"
-            ) 200>>"$1"
+            $$"""
+            flock -x 200 bash -c 'grep -vF -- "$2" "$1" > "$1".tmp && mv "$1".tmp "$1"' _ "$1" "$2" 200>>"$1"
             """,
             [authorizedKeysPath, keyLine],
             cancellationToken);

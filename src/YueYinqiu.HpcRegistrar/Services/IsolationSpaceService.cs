@@ -20,7 +20,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
             await CreateSpaceFilesAsync(hpc, layout, cancellationToken);
         }
 
-        await hpc.AppendAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
+        await hpc.AddAuthorizedKeyAsync(layout.AuthorizedKeys, layout.AuthorizedKeyLine(normalized), cancellationToken);
         return null;
     }
 

@@ -54,11 +54,10 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task AddAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""
-            flock -x 200 \
+            flock -x "$1".lock \
                 bash -c \
                     'printf "%s\n" "$2" > "$1".tmp; [ -f "$1" ] && cat "$1" >> "$1".tmp; mv "$1".tmp "$1"' \
-                _ "$1" "$2" \
-            200>>"$1".lock
+                    _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],
             cancellationToken);
@@ -66,11 +65,10 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task RemoveAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""
-            flock -x 200 \
+            flock -x "$1".lock \
                 bash -c \
                     'grep -vF -- "$2" "$1" > "$1".tmp && mv "$1".tmp "$1"' \
-                    _ "$1" "$2" \
-            200>>"$1".lock
+                    _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],
             cancellationToken);

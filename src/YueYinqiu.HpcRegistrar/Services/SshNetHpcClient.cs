@@ -24,81 +24,65 @@ public sealed class SshNetHpcClient : IDisposable
 
     public async Task<bool> PathExistsAsync(string path, CancellationToken cancellationToken = default)
     {
-        var (status, _) = await RunAsync($"test -e {ShellQuote(path)}", cancellationToken);
+        var (status, _) = await RunAsync("test -e \"$1\"", [path], cancellationToken);
         return status == 0;
     }
 
     public async Task<string> ReadFileAsync(string path, CancellationToken cancellationToken = default)
     {
-        var (_, output) = await RunAsync($"cat {ShellQuote(path)} 2>/dev/null", cancellationToken);
+        var (_, output) = await RunAsync("cat \"$1\" 2>/dev/null", [path], cancellationToken);
         return output;
     }
 
-    public async Task CreateDirectoryAsync(string path, CancellationToken cancellationToken = default)
-    {
-        await RunCheckedAsync($"mkdir -p {ShellQuote(path)}", cancellationToken);
-    }
+    public async Task CreateDirectoryAsync(string path, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync("mkdir -p \"$1\"", [path], cancellationToken);
 
-    public async Task WriteFileAsync(string path, string content, CancellationToken cancellationToken = default)
-    {
-        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-        await RunCheckedAsync($"printf '%s' '{encoded}' | base64 -d > {ShellQuote(path)}", cancellationToken);
-    }
+    public async Task WriteFileAsync(string path, string content, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync($"printf '%s' '{Encode(content)}' | base64 -d > \"$1\"", [path], cancellationToken);
 
-    public async Task SetExecutableAsync(string path, CancellationToken cancellationToken = default)
-    {
-        await RunCheckedAsync($"chmod 500 {ShellQuote(path)}", cancellationToken);
-    }
+    public async Task SetExecutableAsync(string path, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync("chmod 500 \"$1\"", [path], cancellationToken);
 
-    public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default)
-    {
-        await RunCheckedAsync($"ln -s {ShellQuote(targetPath)} {ShellQuote(linkPath)}", cancellationToken);
-    }
+    public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync("ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);
 
-    public async Task AppendAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default)
-    {
-        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyLine));
-        var path = ShellQuote(authorizedKeysPath);
+    public async Task AppendAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $"""
-            key=$(printf '%s' '{encoded}' | base64 -d)
             ( flock -x 200
-              grep -qF -- "$key" {path} || printf '%s\n' "$key" >> {path}
-            ) 200>>{path}
+              grep -qF -- "$2" "$1" || printf '%s\n' "$2" >> "$1"
+            ) 200>>"$1"
             """,
+            [authorizedKeysPath, keyLine],
             cancellationToken);
-    }
 
-    public async Task RemoveAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default)
-    {
-        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(keyLine));
-        var path = ShellQuote(authorizedKeysPath);
+    public async Task RemoveAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $"""
-            key=$(printf '%s' '{encoded}' | base64 -d)
             ( flock -x 200
-              grep -vF -- "$key" {path} > {path}.tmp && mv {path}.tmp {path}
-            ) 200>>{path}
+              grep -vF -- "$2" "$1" > "$1".tmp && mv "$1".tmp "$1"
+            ) 200>>"$1"
             """,
+            [authorizedKeysPath, keyLine],
             cancellationToken);
-    }
 
-    private async Task<(int? Status, string Output)> RunAsync(string command, CancellationToken cancellationToken)
+    private async Task<(int? Status, string Output)> RunAsync(string script, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
-        using var cmd = client.CreateCommand(command);
+        var setArgs = string.Join(' ', arguments.Select(a => $"\"$(printf '%s' '{Encode(a)}' | base64 -d)\""));
+        using var cmd = client.CreateCommand($"set -- {setArgs}\n{script}");
         await cmd.ExecuteAsync(cancellationToken);
         var output = string.Concat(cmd.Result, cmd.Error);
         return (cmd.ExitStatus, output);
     }
 
-    private async Task RunCheckedAsync(string command, CancellationToken cancellationToken)
+    private async Task RunCheckedAsync(string script, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
-        var (status, output) = await RunAsync(command, cancellationToken);
+        var (status, output) = await RunAsync(script, arguments, cancellationToken);
         if (status != 0)
         {
             throw new InvalidOperationException($"HPC 命令执行失败（退出码 {status?.ToString() ?? "未知"}）：{output}");
         }
     }
 
-    private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";
+    private static string Encode(string value) => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 }

@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace YueYinqiu.HpcRegistrar.Services;
+namespace HpcRegistrar.Services;
 
 public sealed class SpaceLayout(string username, string sub)
 {

@@ -1,4 +1,4 @@
-namespace YueYinqiu.HpcRegistrar.Services;
+namespace HpcRegistrar.Services;
 
 public sealed record AuthorizedKey(string Key);
 

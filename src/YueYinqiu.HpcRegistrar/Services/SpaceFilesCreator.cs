@@ -24,7 +24,8 @@ public static class SpaceFilesCreator
 
     private static async Task WriteSshCommandAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
     {
-        var target = Path.Combine(targetRoot, ".hpc-isolation", "ssh-command.sh");
+        var target = Path.Combine(targetRoot, layout.SshCommandRelativePath);
+        await hpc.CreateDirectoryAsync(Path.GetDirectoryName(target)!, cancellationToken);
         await hpc.WriteFileAsync(
             target,
             $$"""

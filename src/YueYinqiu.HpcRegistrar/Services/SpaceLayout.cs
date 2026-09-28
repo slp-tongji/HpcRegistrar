@@ -18,7 +18,9 @@ public sealed class SpaceLayout(string username, string sub)
 
     public string SpaceSsdfsPath => Path.Combine(ssdfsDatahome, username, SpaceName);
 
-    public string SshCommandPath => Path.Combine(SpaceHomePath, ".hpc-isolation", "ssh-command.sh");
+    public string SshCommandRelativePath => Path.Combine(".hpc-isolation", "ssh-command.sh");
+
+    public string SshCommandPath => Path.Combine(SpaceHomePath, SshCommandRelativePath);
 
     public string OriginalAuthorizedKeysPath => Path.Combine(OriginalHomePath, ".ssh", "authorized_keys");
 

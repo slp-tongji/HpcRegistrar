@@ -24,7 +24,7 @@ public sealed partial class ServeCommand : ICommand
     [CommandOption("oidc-id")]
     public required string OidcId { get; set; }
 
-    [CommandOption("oidc-secret", EnvironmentVariable = "HPC_REGISTRAR_ARGUMENT_OIDC_SECRET")]
+    [CommandOption("oidc-secret", EnvironmentVariable = "TONGJI_HPC_REGISTRAR_ARGUMENT_OIDC_SECRET")]
     public required string OidcSecret { get; set; }
 
     [CommandOption("oidc-ca")]

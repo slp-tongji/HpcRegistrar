@@ -15,10 +15,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         var layout = new SpaceLayout(username, sub);
 
         using var hpc = hpcFactory();
-        if (!await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
-        {
-            await SpaceFilesCreator.CreateAsync(hpc, layout, cancellationToken);
-        }
+        await SpaceFilesCreator.EnsureAsync(hpc, layout, cancellationToken);
 
         await hpc.AddAuthorizedKeyAsync(layout.OriginalAuthorizedKeysPath, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
         return null;

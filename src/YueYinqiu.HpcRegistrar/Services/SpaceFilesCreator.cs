@@ -2,8 +2,13 @@ namespace YueYinqiu.HpcRegistrar.Services;
 
 public static class SpaceFilesCreator
 {
-    public static async Task CreateAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
+    public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
     {
+        if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
+        {
+            return;
+        }
+
         await hpc.CreateDirectoryAsync(layout.SpaceHomePath, cancellationToken);
 
         await WriteSshCommandAsync(hpc, layout, cancellationToken);

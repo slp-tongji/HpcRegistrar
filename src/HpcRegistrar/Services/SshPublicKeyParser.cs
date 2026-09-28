@@ -1,11 +1,18 @@
 namespace HpcRegistrar.Services;
 
+using System.Buffers;
+
 public static class SshPublicKeyParser
 {
     public static string? Normalize(string keyLine)
     {
         var parts = keyLine.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (parts.Length < 2 || !IsKnownType(parts[0]))
+        {
+            return null;
+        }
+
+        if (parts[1].AsSpan().ContainsAnyExcept(base64Characters))
         {
             return null;
         }
@@ -21,6 +28,10 @@ public static class SshPublicKeyParser
 
         return $"{parts[0]} {parts[1]}";
     }
+
+    private static readonly SearchValues<char> base64Characters = SearchValues.Create(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    );
 
     private static bool IsKnownType(string type) => type switch
     {

@@ -65,7 +65,7 @@ public static class SpaceFilesCreator
             echo "  - ssh：默认读取真实 HOME 下的 ~/.ssh，而非隔离空间内的 ~/.ssh；需手动用 -F 指定配置"
             echo "  - systemd：用户态服务从 passwd 读取 HOME，而非环境变量"
             echo "  - cron：启动任务时使用 passwd 中的 HOME，覆盖环境变量"
-            echo "更多内容请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation"
+            echo "更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation"
             """,
             cancellationToken);
         await hpc.WriteFileAsync(

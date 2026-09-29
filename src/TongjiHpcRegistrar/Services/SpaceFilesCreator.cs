@@ -85,9 +85,10 @@ public static class SpaceFilesCreator
     )
     {
         await hpc.CreateDirectoryAsync(path, cancellationToken);
-        
+
+        var commandFile = Path.Combine(path, layout.SshCommandFileName);
         await hpc.WriteFileAsync(
-            Path.Combine(path, layout.SshCommandFileName),
+            commandFile,
             $$"""
             #!/bin/bash
 
@@ -106,7 +107,7 @@ public static class SpaceFilesCreator
             fi
             """,
             cancellationToken);
-        await hpc.SetExecutableAsync(path, cancellationToken);
+        await hpc.SetExecutableAsync(commandFile, cancellationToken);
 
         await hpc.WriteFileAsync(
             Path.Combine(path, "owner"),
@@ -133,7 +134,7 @@ public static class SpaceFilesCreator
             Path.Combine(path, "config"),
             $$"""
             # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用。
-            # 如果需要，可使用 ssh -F {{Escape(Path.Combine(layout.SpaceHomePath, ".ssh/config"))}} 以应用此配置。
+            # 如果需要，可使用 ssh -F "$HOME/.ssh/config" 以应用此配置。
             # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定。
             """,
             cancellationToken);

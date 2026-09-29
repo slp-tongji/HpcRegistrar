@@ -66,7 +66,8 @@ public static class SpaceFilesCreator
             if [[ $- == *i* ]]; then
                 echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
                 echo "注意：隔离空间通过修改环境变量实现，部分程序可能不完全兼容，已知不兼容的有："
-                echo "  - ssh：默认读取 passwd 而不尊重 HOME 变量；需手动指定配置和密钥"
+                echo "  - tmux：默认连接 /tmp/tmux-<UID>/default，会共享同一个服务；已通过 .bashrc 中设置 TMUX_TMPDIR 修复"
+                echo "  - ssh：默认读取 passwd 而不尊重 HOME 变量；直接使用 ssh 时需手动指定配置和密钥，但 git 已通过 GIT_SSH_COMMAND 配好"
                 echo "  - slurm：若配置了清除环境变量等行为，可能读取 passwd 获取 HOME ；一般情况下没有问题"
                 echo "  - cron：服务运行在系统级别，无法简单隔离；尽量使用绝对路径"
                 echo "  - systemd：服务由系统 systemd 拉起，无法简单隔离；配置需在原本家目录下进行，尽量使用绝对路径"

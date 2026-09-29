@@ -26,17 +26,13 @@ public sealed class SpaceLayout
 
     public string SpaceSsdfsPath => Path.Combine(ssdfsDatahome, username, SpaceName);
 
-    public string IsolationDirectoryRelativePath => ".hpc-isolation";
+    public string HpcRegistrarRelativePath => ".hpc-registrar";
 
-    public string SshCommandRelativePath => Path.Combine(IsolationDirectoryRelativePath, "ssh-command.sh");
-
-    public string OwnerFileRelativePath => Path.Combine(IsolationDirectoryRelativePath, "owner");
-
-    public string SshCommandPath => Path.Combine(SpaceHomePath, SshCommandRelativePath);
+    public string SshCommandRelativePath => Path.Combine(HpcRegistrarRelativePath, "ssh-command.sh");
 
     public string OriginalAuthorizedKeysPath => Path.Combine(OriginalHomePath, ".ssh", "authorized_keys");
 
-    public string AuthorizedKeyPrefix => $"command=\"{SshCommandPath}\" ";
+    public string AuthorizedKeyPrefix => $"command=\"{Path.Combine(SpaceHomePath, SshCommandRelativePath)}\" ";
 
     public SpaceLayout(string username, string sub)
     {

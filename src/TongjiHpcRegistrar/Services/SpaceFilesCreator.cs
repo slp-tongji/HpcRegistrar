@@ -20,7 +20,7 @@ public static class SpaceFilesCreator
         await WriteBashProfileAsync(hpc, tempRoot, cancellationToken);
         await WriteBashrcAsync(hpc, layout, tempRoot, cancellationToken);
         await WriteSpaceSshAsync(hpc, layout, tempRoot, cancellationToken);
-        await WriteOwnerAsync(hpc, layout, ownerName, tempRoot, cancellationToken);
+        await WriteOwnerFileAsync(hpc, layout, ownerName, tempRoot, cancellationToken);
         await CreateSsdfsAsync(hpc, layout, tempRoot, cancellationToken);
 
         await hpc.MoveAsync(tempRoot, layout.SpaceHomePath, cancellationToken);
@@ -122,9 +122,9 @@ public static class SpaceFilesCreator
             cancellationToken);
     }
 
-    private static async Task WriteOwnerAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, string targetRoot, CancellationToken cancellationToken)
+    private static async Task WriteOwnerFileAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, string targetRoot, CancellationToken cancellationToken)
     {
-        var target = Path.Combine(targetRoot, layout.OwnerFileRelativePath);
+        var target = Path.Combine(targetRoot, layout.HpcRegistrarRelativePath, "owner");
         var directory = Path.GetDirectoryName(target);
         Debug.Assert(directory is not null);
         await hpc.CreateDirectoryAsync(directory, cancellationToken);

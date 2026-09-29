@@ -47,15 +47,18 @@ public static class SpaceFilesCreator
             fi
             export PATH
 
-            # User specific aliases and functions
-
+            # Hpc Registrar
+            # 这里加点说明
+            # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
             # ===== tmux =====
-            # https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
             export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
             mkdir -p "$TMUX_TMPDIR"
             # ===== tmux =====
 
+            # User specific aliases and functions
+
             echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
+            echo "这里加点说明"
             """,
             cancellationToken);
         await hpc.WriteFileAsync(

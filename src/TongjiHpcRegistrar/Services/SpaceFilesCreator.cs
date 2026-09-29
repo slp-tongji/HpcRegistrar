@@ -5,37 +5,70 @@ namespace TongjiHpcRegistrar.Services;
 
 public static class SpaceFilesCreator
 {
-    public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, CancellationToken cancellationToken = default)
+    public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
     {
         if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
         {
             return;
         }
 
-        var tempRoot = layout.SpaceHomePath + ".tmp." + Guid.NewGuid().ToString("N");
-        await hpc.CreateDirectoryAsync(tempRoot, cancellationToken);
+        var temporary = layout.SpaceHomePath + ".tmp." + Guid.NewGuid().ToString("N");
 
-        await WriteSshCommandAsync(hpc, layout, tempRoot, cancellationToken);
-        await WriteBashLogoutAsync(hpc, tempRoot, cancellationToken);
-        await WriteBashProfileAsync(hpc, tempRoot, cancellationToken);
-        await WriteBashrcAsync(hpc, layout, tempRoot, cancellationToken);
-        await WriteSpaceSshAsync(hpc, layout, tempRoot, cancellationToken);
-        await WriteOwnerFileAsync(hpc, layout, ownerName, tempRoot, cancellationToken);
-        await CreateSsdfsAsync(hpc, layout, tempRoot, cancellationToken);
+        await hpc.CreateDirectoryAsync(layout.SpaceSsdfsPath, cancellationToken);
+        await WriteHomeAsync(hpc, temporary, layout, cancellationToken);
 
-        await hpc.MoveAsync(tempRoot, layout.SpaceHomePath, cancellationToken);
+        await hpc.MoveAsync(temporary, layout.SpaceHomePath, cancellationToken);
     }
 
-    private static async Task WriteSshCommandAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
+    private static async Task WriteHomeAsync(
+        SshNetHpcClient hpc, string path, SpaceLayout layout, CancellationToken cancellationToken
+    )
     {
-        var target = Path.Combine(targetRoot, layout.SshCommandRelativePath);
-        var directory = Path.GetDirectoryName(target);
-        Debug.Assert(directory is not null);
-        await hpc.CreateDirectoryAsync(directory, cancellationToken);
+        await hpc.CreateDirectoryAsync(path, cancellationToken);
+
+        await WriteHpcRegistrarDirectoryAsync(
+            hpc, Path.Combine(path, layout.HpcRegistrarDirectoryName), layout, cancellationToken
+        );
+        await WriteSpaceSshAsync(hpc, layout, path, cancellationToken);
+
+
+        await WriteBashrcAsync(hpc, layout, Path.Combine(path, ".bashrc"), cancellationToken);
         await hpc.WriteFileAsync(
-            target,
+            Path.Combine(path, ".bash_profile"),
+            """
+            # ~/.bash_profile
+
+            if [ -f ~/.bashrc ]; then
+                . ~/.bashrc
+            fi
+
+            # User specific environment and startup programs
+            """,
+            cancellationToken
+        );
+        await hpc.WriteFileAsync(
+            Path.Combine(path, ".bash_logout"),
+            """
+            # ~/.bash_logout
+            """,
+            cancellationToken
+        );
+
+        await hpc.CreateSymbolicLinkAsync(Path.Combine(path, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
+    }
+
+    private static async Task WriteHpcRegistrarDirectoryAsync(
+        SshNetHpcClient hpc, string path, SpaceLayout layout, CancellationToken cancellationToken
+    )
+    {
+        await hpc.CreateDirectoryAsync(path, cancellationToken);
+        await hpc.WriteFileAsync(
+            Path.Combine(path, layout.SshCommandFileName),
             $$"""
             #!/bin/bash
+
+            # 本文件与 Tongji Hpc Registrar 相关，请勿修改、删除或移动，这可能导致无法正常登录
+            # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             NEW_HOME={{Escape(layout.SpaceHomePath)}}
             NEW_ENV="HOME=$NEW_HOME TERM=$TERM SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
@@ -49,34 +82,21 @@ public static class SpaceFilesCreator
             fi
             """,
             cancellationToken);
-        await hpc.SetExecutableAsync(target, cancellationToken);
+        await hpc.SetExecutableAsync(path, cancellationToken);
+
+        await hpc.WriteFileAsync(
+            Path.Combine(path, "owner"),
+            $$"""
+            # 本文件用以指定此隔离空间的所有者，请不要修改或删除
+            {{layout.Sub}}
+            """,
+            cancellationToken);
     }
 
-    private static async Task WriteBashLogoutAsync(SshNetHpcClient hpc, string targetRoot, CancellationToken cancellationToken) =>
+    private static async Task WriteBashrcAsync(SshNetHpcClient hpc, SpaceLayout layout, string path, CancellationToken cancellationToken)
+    {
         await hpc.WriteFileAsync(
-            Path.Combine(targetRoot, ".bash_logout"),
-            """
-            # ~/.bash_logout
-            """,
-            cancellationToken);
-
-    private static async Task WriteBashProfileAsync(SshNetHpcClient hpc, string targetRoot, CancellationToken cancellationToken) =>
-        await hpc.WriteFileAsync(
-            Path.Combine(targetRoot, ".bash_profile"),
-            """
-            # ~/.bash_profile
-
-            if [ -f ~/.bashrc ]; then
-                . ~/.bashrc
-            fi
-
-            # User specific environment and startup programs
-            """,
-            cancellationToken);
-
-    private static async Task WriteBashrcAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken) =>
-        await hpc.WriteFileAsync(
-            Path.Combine(targetRoot, ".bashrc"),
+            path,
             $$"""
             # ~/.bashrc
 
@@ -93,6 +113,7 @@ public static class SpaceFilesCreator
             # User specific aliases and functions
 
             # ===== tmux =====
+            # https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
             export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
             mkdir -p "$TMUX_TMPDIR"
             # ===== tmux =====
@@ -100,6 +121,7 @@ public static class SpaceFilesCreator
             echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
             """,
             cancellationToken);
+    }
 
     private static async Task WriteSpaceSshAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
     {
@@ -111,7 +133,7 @@ public static class SpaceFilesCreator
             # 请注意，本文件位于隔离空间中，不会在登录时起到作用。
             """,
             cancellationToken);
-        
+
         await hpc.WriteFileAsync(
             Path.Combine(spaceSsh, "config"),
             $$"""
@@ -120,27 +142,6 @@ public static class SpaceFilesCreator
             # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定。
             """,
             cancellationToken);
-    }
-
-    private static async Task WriteOwnerFileAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, string targetRoot, CancellationToken cancellationToken)
-    {
-        var target = Path.Combine(targetRoot, layout.HpcRegistrarRelativePath, "owner");
-        var directory = Path.GetDirectoryName(target);
-        Debug.Assert(directory is not null);
-        await hpc.CreateDirectoryAsync(directory, cancellationToken);
-        await hpc.WriteFileAsync(
-            target,
-            $$"""
-            name={{ownerName}}
-            sub={{layout.Sub}}
-            """,
-            cancellationToken);
-    }
-
-    private static async Task CreateSsdfsAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
-    {
-        await hpc.CreateDirectoryAsync(layout.SpaceSsdfsPath, cancellationToken);
-        await hpc.CreateSymbolicLinkAsync(Path.Combine(targetRoot, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
     }
 
     private static readonly SearchValues<char> safeCharacters = SearchValues.Create(

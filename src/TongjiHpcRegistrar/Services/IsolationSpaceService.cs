@@ -4,7 +4,7 @@ public sealed record AuthorizedKey(string Key);
 
 public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, string username)
 {
-    public async Task<string?> AddKeyAsync(string sub, string name, string key, CancellationToken cancellationToken = default)
+    public async Task<string?> AddKeyAsync(string sub, string key, CancellationToken cancellationToken = default)
     {
         var normalized = SshPublicKeyParser.Normalize(key);
         if (normalized is null)
@@ -15,7 +15,7 @@ public sealed class IsolationSpaceService(Func<SshNetHpcClient> hpcFactory, stri
         var layout = new SpaceLayout(username, sub);
 
         using var hpc = hpcFactory();
-        await SpaceFilesCreator.EnsureAsync(hpc, layout, name, cancellationToken);
+        await SpaceFilesCreator.EnsureAsync(hpc, layout, cancellationToken);
 
         await hpc.AddAuthorizedKeyAsync(layout.OriginalAuthorizedKeysPath, $"{layout.AuthorizedKeyPrefix}{normalized}", cancellationToken);
         return null;

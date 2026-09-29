@@ -54,6 +54,9 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task MoveAsync(string sourcePath, string targetPath, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync("mv \"$1\" \"$2\"", [sourcePath, targetPath], cancellationToken);
 
+    public async Task GenerateSshKeyAsync(string path, CancellationToken cancellationToken = default) =>
+        await RunCheckedAsync("ssh-keygen -t ed25519 -f \"$1\" -N ''", [path], cancellationToken);
+
     public async Task AddAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""

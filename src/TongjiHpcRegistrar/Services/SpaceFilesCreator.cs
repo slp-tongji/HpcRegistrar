@@ -29,10 +29,35 @@ public static class SpaceFilesCreator
         await WriteHpcRegistrarDirectoryAsync(
             hpc, Path.Combine(path, layout.HpcRegistrarDirectoryName), layout, cancellationToken
         );
-        await WriteSpaceSshAsync(hpc, layout, path, cancellationToken);
+        await WriteSshDirectoryAsync(hpc, layout, Path.Combine(path, ".ssh"), cancellationToken);
 
+        await hpc.CreateSymbolicLinkAsync(Path.Combine(path, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
+        await hpc.WriteFileAsync(
+            Path.Combine(path, ".bashrc"),
+            $$"""
+            # ~/.bashrc
 
-        await WriteBashrcAsync(hpc, layout, Path.Combine(path, ".bashrc"), cancellationToken);
+            if [ -f /etc/bashrc ]; then
+                . /etc/bashrc
+            fi
+
+            if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+            then
+                PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+            fi
+            export PATH
+
+            # User specific aliases and functions
+
+            # ===== tmux =====
+            # https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
+            export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
+            mkdir -p "$TMUX_TMPDIR"
+            # ===== tmux =====
+
+            echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
+            """,
+            cancellationToken);
         await hpc.WriteFileAsync(
             Path.Combine(path, ".bash_profile"),
             """
@@ -53,8 +78,6 @@ public static class SpaceFilesCreator
             """,
             cancellationToken
         );
-
-        await hpc.CreateSymbolicLinkAsync(Path.Combine(path, "ssdfs"), layout.SpaceSsdfsPath, cancellationToken);
     }
 
     private static async Task WriteHpcRegistrarDirectoryAsync(
@@ -62,6 +85,7 @@ public static class SpaceFilesCreator
     )
     {
         await hpc.CreateDirectoryAsync(path, cancellationToken);
+        
         await hpc.WriteFileAsync(
             Path.Combine(path, layout.SshCommandFileName),
             $$"""
@@ -93,49 +117,20 @@ public static class SpaceFilesCreator
             cancellationToken);
     }
 
-    private static async Task WriteBashrcAsync(SshNetHpcClient hpc, SpaceLayout layout, string path, CancellationToken cancellationToken)
+    private static async Task WriteSshDirectoryAsync(
+        SshNetHpcClient hpc, SpaceLayout layout, string path, CancellationToken cancellationToken
+    )
     {
+        await hpc.CreateDirectoryAsync(path, cancellationToken);
+
         await hpc.WriteFileAsync(
-            path,
-            $$"""
-            # ~/.bashrc
-
-            if [ -f /etc/bashrc ]; then
-                . /etc/bashrc
-            fi
-
-            if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
-            then
-                PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-            fi
-            export PATH
-
-            # User specific aliases and functions
-
-            # ===== tmux =====
-            # https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
-            export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
-            mkdir -p "$TMUX_TMPDIR"
-            # ===== tmux =====
-
-            echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
-            """,
-            cancellationToken);
-    }
-
-    private static async Task WriteSpaceSshAsync(SshNetHpcClient hpc, SpaceLayout layout, string targetRoot, CancellationToken cancellationToken)
-    {
-        var spaceSsh = Path.Combine(targetRoot, ".ssh");
-        await hpc.CreateDirectoryAsync(spaceSsh, cancellationToken);
-        await hpc.WriteFileAsync(
-            Path.Combine(spaceSsh, "authorized_keys"),
+            Path.Combine(path, "authorized_keys"),
             $$"""
             # 请注意，本文件位于隔离空间中，不会在登录时起到作用。
             """,
             cancellationToken);
-
         await hpc.WriteFileAsync(
-            Path.Combine(spaceSsh, "config"),
+            Path.Combine(path, "config"),
             $$"""
             # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用。
             # 如果需要，可使用 ssh -F {{Escape(Path.Combine(layout.SpaceHomePath, ".ssh/config"))}} 以应用此配置。

@@ -47,15 +47,19 @@ public static class SpaceFilesCreator
             fi
             export PATH
 
-            # Hpc Registrar
+            # ===== Hpc Registrar =====
             # 隔离空间通过修改环境变量实现，但部分程序不尊重 HOME 变量。
             # 此处对已知不兼容、且容易通过环境变量修复的程序做兜底配置。
             # 注意：此文件在空间首次创建时生成，之后不会再更新；若后续遇到其他不兼容的程序，需手动添加。
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
-            # ===== tmux =====
+
+            # tmux
             export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
             mkdir -p "$TMUX_TMPDIR"
-            # ===== tmux =====
+
+            # git
+            export GIT_SSH_COMMAND="ssh -F $HOME/.ssh/config"
+            # ===== Hpc Registrar =====
 
             # User specific aliases and functions
 
@@ -136,6 +140,9 @@ public static class SpaceFilesCreator
     {
         await hpc.CreateDirectoryAsync(path, cancellationToken);
 
+        var keyFile = Path.Combine(path, "id_ed25519");
+        await hpc.GenerateSshKeyAsync(keyFile, cancellationToken);
+
         await hpc.WriteFileAsync(
             Path.Combine(path, "authorized_keys"),
             $$"""
@@ -150,6 +157,12 @@ public static class SpaceFilesCreator
             # 如果需要，可使用 ssh -F "$HOME/.ssh/config" 以应用此配置
             # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
+
+            # 通过 443 端口访问 GitHub，规避 22 端口被屏蔽的情况
+            Host github.com
+                Hostname ssh.github.com
+                Port 443
+                IdentityFile {{Escape(Path.Combine(layout.SpaceHomePath, ".ssh", "id_ed25519"))}}
             """,
             cancellationToken);
     }

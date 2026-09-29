@@ -61,10 +61,10 @@ public static class SpaceFilesCreator
 
             echo "欢迎！如果看到了这条消息，说明已成功配置隔离空间！（可以在 ~/.bashrc 中移除这条提示）"
             echo "注意：隔离空间通过修改环境变量实现，部分程序可能不完全兼容，已知不兼容的有："
-            echo "  - tmux：默认连接 /tmp/tmux-<UID>/default，会共享同一个服务；已通过 .bashrc 中设置 TMUX_TMPDIR 修复"
-            echo "  - ssh：默认读取真实 HOME 下的 ~/.ssh，而非隔离空间内的 ~/.ssh；需手动用 -F 指定配置"
-            echo "  - systemd：用户态服务从 passwd 读取 HOME，而非环境变量"
-            echo "  - cron：启动任务时使用 passwd 中的 HOME，覆盖环境变量"
+            echo "  - ssh：默认读取 passwd 而不尊重 HOME 变量；需手动指定配置和密钥"
+            echo "  - systemd：服务由系统 systemd 拉起，无法简单隔离；配置需在原本家目录下进行，尽量使用绝对路径"
+            echo "  - cron：服务运行在系统级别，无法简单隔离；尽量使用绝对路径"
+            echo "  - slurm：若配置了清除环境变量等行为，可能读取 passwd 获取 HOME ；一般情况下没有问题"
             echo "更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation"
             """,
             cancellationToken);

@@ -68,7 +68,7 @@ public static class SpaceFilesCreator
                 echo "注意：隔离空间通过修改环境变量实现，部分程序可能不完全兼容，已知不兼容的有："
                 echo "  - tmux：默认连接 /tmp/tmux-<UID>/default，会共享同一个服务；已通过 .bashrc 中设置 TMUX_TMPDIR 修复"
                 echo "  - ssh：默认读取 passwd 而不尊重 HOME 变量；直接使用 ssh 时需手动指定配置和密钥，但 git 已通过 GIT_SSH_COMMAND 配好"
-                echo "  - slurm：若配置了清除环境变量等行为，可能读取 passwd 获取 HOME ；一般情况下没有问题"
+                echo "  - slurm：若配置了清除环境变量等行为，可能读取 passwd 获取 HOME；一般情况下没有问题"
                 echo "  - cron：服务运行在系统级别，无法简单隔离；尽量使用绝对路径"
                 echo "  - systemd：服务由系统 systemd 拉起，无法简单隔离；配置需在原本家目录下进行，尽量使用绝对路径"
                 echo "更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation"
@@ -154,8 +154,8 @@ public static class SpaceFilesCreator
         await hpc.WriteFileAsync(
             Path.Combine(path, "config"),
             $$"""
-            # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用
-            # git 已通过 GIT_SSH_COMMAND 自动应用本配置（见 ~/.bashrc ）
+            # 请注意，SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用
+            # git 已通过 GIT_SSH_COMMAND 自动应用本配置（见 ~/.bashrc）
             # 直接使用 ssh 时，需手动 ssh -F "$HOME/.ssh/config" 以应用此配置
             # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation

@@ -40,7 +40,7 @@ public sealed class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostAddKeyAsync(string key, CancellationToken cancellationToken)
     {
-        Error = await spaceService.AddKeyAsync(Owner, key, cancellationToken);
+        Error = await spaceService.AddKeyAsync(Owner, UserName, key, cancellationToken);
         Success = Error is null ? "公钥已添加。" : null;
         Keys = await spaceService.ListKeysAsync(Owner, cancellationToken);
         return Page();

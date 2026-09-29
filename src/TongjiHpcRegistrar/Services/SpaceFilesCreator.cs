@@ -5,7 +5,7 @@ namespace TongjiHpcRegistrar.Services;
 
 public static class SpaceFilesCreator
 {
-    public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, CancellationToken cancellationToken = default)
+    public static async Task EnsureAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, CancellationToken cancellationToken = default)
     {
         if (await hpc.PathExistsAsync(layout.SpaceHomePath, cancellationToken))
         {
@@ -20,6 +20,7 @@ public static class SpaceFilesCreator
         await WriteBashProfileAsync(hpc, tempRoot, cancellationToken);
         await WriteBashrcAsync(hpc, layout, tempRoot, cancellationToken);
         await WriteSpaceSshAsync(hpc, layout, tempRoot, cancellationToken);
+        await WriteOwnerAsync(hpc, layout, ownerName, tempRoot, cancellationToken);
         await CreateSsdfsAsync(hpc, layout, tempRoot, cancellationToken);
 
         await hpc.MoveAsync(tempRoot, layout.SpaceHomePath, cancellationToken);
@@ -117,6 +118,21 @@ public static class SpaceFilesCreator
             # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用。
             # 如果需要，可使用 ssh -F {{Escape(Path.Combine(layout.SpaceHomePath, ".ssh/config"))}} 以应用此配置。
             # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定。
+            """,
+            cancellationToken);
+    }
+
+    private static async Task WriteOwnerAsync(SshNetHpcClient hpc, SpaceLayout layout, string ownerName, string targetRoot, CancellationToken cancellationToken)
+    {
+        var target = Path.Combine(targetRoot, layout.OwnerFileRelativePath);
+        var directory = Path.GetDirectoryName(target);
+        Debug.Assert(directory is not null);
+        await hpc.CreateDirectoryAsync(directory, cancellationToken);
+        await hpc.WriteFileAsync(
+            target,
+            $$"""
+            name={{ownerName}}
+            sub={{layout.Sub}}
             """,
             cancellationToken);
     }

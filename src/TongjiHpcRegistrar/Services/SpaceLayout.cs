@@ -16,6 +16,8 @@ public sealed class SpaceLayout
 
     private readonly string username;
 
+    public string Sub { get; }
+
     public string SpaceName { get; }
 
     public string OriginalHomePath => Path.Combine(shareHome, username);
@@ -24,7 +26,11 @@ public sealed class SpaceLayout
 
     public string SpaceSsdfsPath => Path.Combine(ssdfsDatahome, username, SpaceName);
 
-    public string SshCommandRelativePath => Path.Combine(".hpc-isolation", "ssh-command.sh");
+    public string IsolationDirectoryRelativePath => ".hpc-isolation";
+
+    public string SshCommandRelativePath => Path.Combine(IsolationDirectoryRelativePath, "ssh-command.sh");
+
+    public string OwnerFileRelativePath => Path.Combine(IsolationDirectoryRelativePath, "owner");
 
     public string SshCommandPath => Path.Combine(SpaceHomePath, SshCommandRelativePath);
 
@@ -36,6 +42,7 @@ public sealed class SpaceLayout
     {
         EnsureSafe(username, nameof(username));
         this.username = username;
+        Sub = sub;
 
         SpaceName = "s" + Convert.ToHexString(
             SHA256.HashData(Encoding.UTF8.GetBytes(sub)).AsSpan(0, 8)).ToLowerInvariant();

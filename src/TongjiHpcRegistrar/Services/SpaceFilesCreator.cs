@@ -160,7 +160,7 @@ public static class SpaceFilesCreator
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             Host *
-                IdentityFile {{Escape(Path.Combine(layout.SpaceHomePath, ".ssh", "id_ed25519"))}}
+                IdentityFile {{Path.Combine(layout.SpaceHomePath, ".ssh", "id_ed25519")}}
 
             # 通过 443 端口访问 GitHub，规避 22 端口被屏蔽的情况
             Host github.com

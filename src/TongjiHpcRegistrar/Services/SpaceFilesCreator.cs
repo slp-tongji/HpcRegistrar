@@ -128,14 +128,16 @@ public static class SpaceFilesCreator
             Path.Combine(path, "authorized_keys"),
             $$"""
             # 请注意，本文件位于隔离空间中，不会在登录时起到作用。
+            # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
             """,
             cancellationToken);
         await hpc.WriteFileAsync(
             Path.Combine(path, "config"),
             $$"""
-            # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用。
-            # 如果需要，可使用 ssh -F "$HOME/.ssh/config" 以应用此配置。
-            # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定。
+            # 请注意， SSH 不尊重 HOME 环境变量，因此本配置默认不会被使用
+            # 如果需要，可使用 ssh -F "$HOME/.ssh/config" 以应用此配置
+            # 注意此目录下的 SSH 密钥也不会被自动取用，需要手动指定
+            # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
             """,
             cancellationToken);
     }

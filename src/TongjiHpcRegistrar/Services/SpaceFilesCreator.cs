@@ -48,7 +48,7 @@ public static class SpaceFilesCreator
             export PATH
 
             # Hpc Registrar
-            # 本隔离空间通过修改环境变量实现，但部分程序不尊重 HOME 变量。
+            # 隔离空间通过修改环境变量实现，但部分程序不尊重 HOME 变量。
             # 此处对已知不兼容、且容易通过环境变量修复的程序做兜底配置。
             # 注意：此文件在空间首次创建时生成，之后不会再更新；若后续遇到其他不兼容的程序，需手动添加。
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation

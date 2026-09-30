@@ -54,8 +54,8 @@ public static class SpaceFilesCreator
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             # tmux
-            export TMUX_TMPDIR="/tmp/tmux-$(id -u)/"{{Escape(layout.SpaceName)}}
-            mkdir -p "$TMUX_TMPDIR"
+            export TMUX_TMPDIR="/tmp/tmux-$(/usr/bin/id -u)/"{{Escape(layout.SpaceName)}}
+            /usr/bin/mkdir -p "$TMUX_TMPDIR"
 
             # git
             export GIT_SSH_COMMAND="/usr/bin/ssh -F $HOME/.ssh/config"
@@ -118,9 +118,9 @@ public static class SpaceFilesCreator
             cd $NEW_HOME
 
             if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-                exec env -i $NEW_ENV /bin/bash --login
+                exec /usr/bin/env -i $NEW_ENV /bin/bash --login
             else
-                exec env -i $NEW_ENV /bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
+                exec /usr/bin/env -i $NEW_ENV /bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
             fi
             """,
             cancellationToken);

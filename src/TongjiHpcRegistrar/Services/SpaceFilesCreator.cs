@@ -54,7 +54,7 @@ public static class SpaceFilesCreator
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             # tmux
-            export TMUX_TMPDIR="/tmp/tmux-$(/usr/bin/id -u)/"{{Escape(layout.SpaceName)}}
+            export TMUX_TMPDIR="$XDG_RUNTIME_DIR"/tmux-{{Escape(layout.SpaceName)}}
             /usr/bin/mkdir -p "$TMUX_TMPDIR"
 
             # git

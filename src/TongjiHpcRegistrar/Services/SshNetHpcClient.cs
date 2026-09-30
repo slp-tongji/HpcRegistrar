@@ -84,6 +84,7 @@ public sealed class SshNetHpcClient : IDisposable
     {
         var setArgs = string.Join(' ', arguments.Select(a => $"\"$(/usr/bin/printf '%s' '{Encode(a)}' | /usr/bin/base64 -d)\""));
         using var cmd = client.CreateCommand($"set -- {setArgs}\n{script}");
+        cmd.CommandTimeout = TimeSpan.FromSeconds(30);
         await cmd.ExecuteAsync(cancellationToken);
         var output = string.Concat(cmd.Result, cmd.Error);
         return (cmd.ExitStatus, output);

@@ -161,6 +161,7 @@ public static class SpaceFilesCreator
 
             Host *
                 IdentityFile "{{EscapeSshConfigValue(Path.Combine(layout.SpaceHomePath, ".ssh", "id_ed25519"))}}"
+                UserKnownHostsFile "{{EscapeSshConfigValue(Path.Combine(layout.SpaceHomePath, ".ssh", "known_hosts"))}}"
 
             # 通过 443 端口访问 GitHub，规避 22 端口被屏蔽的情况
             Host github.com

@@ -24,13 +24,13 @@ public sealed class SshNetHpcClient : IDisposable
 
     public async Task<bool> PathExistsAsync(string path, CancellationToken cancellationToken = default)
     {
-        var (status, _) = await RunAsync("test -e \"$1\"", [path], cancellationToken);
+        var (status, _) = await RunAsync("/usr/bin/test -e \"$1\"", [path], cancellationToken);
         return status == 0;
     }
 
     public async Task<string> ReadFileAsync(string path, CancellationToken cancellationToken = default)
     {
-        var (status, output) = await RunAsync("cat \"$1\"", [path], cancellationToken);
+        var (status, output) = await RunAsync("/usr/bin/cat \"$1\"", [path], cancellationToken);
         if (status != 0)
         {
             throw new InvalidOperationException($"读取文件失败（退出码 {status?.ToString() ?? "未知"}）：{output}");
@@ -40,29 +40,29 @@ public sealed class SshNetHpcClient : IDisposable
     }
 
     public async Task CreateDirectoryAsync(string path, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("mkdir -p \"$1\"", [path], cancellationToken);
+        await RunCheckedAsync("/usr/bin/mkdir -p \"$1\"", [path], cancellationToken);
 
     public async Task WriteFileAsync(string path, string content, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync($"printf '%s' '{Encode(content)}' | base64 -d > \"$1\"", [path], cancellationToken);
+        await RunCheckedAsync($"/usr/bin/printf '%s' '{Encode(content)}' | /usr/bin/base64 -d > \"$1\"", [path], cancellationToken);
 
     public async Task SetExecutableAsync(string path, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("chmod 500 \"$1\"", [path], cancellationToken);
+        await RunCheckedAsync("/usr/bin/chmod 500 \"$1\"", [path], cancellationToken);
 
     public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);
+        await RunCheckedAsync("/usr/bin/ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);
 
     public async Task MoveAsync(string sourcePath, string targetPath, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("mv \"$1\" \"$2\"", [sourcePath, targetPath], cancellationToken);
+        await RunCheckedAsync("/usr/bin/mv \"$1\" \"$2\"", [sourcePath, targetPath], cancellationToken);
 
     public async Task GenerateSshKeyAsync(string path, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("ssh-keygen -t ed25519 -f \"$1\" -N ''", [path], cancellationToken);
+        await RunCheckedAsync("/usr/bin/ssh-keygen -t ed25519 -f \"$1\" -N ''", [path], cancellationToken);
 
     public async Task AddAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""
-            flock -x "$1".lock \
-                bash -c \
-                    'printf "%s\n" "$2" > "$1".tmp && cat "$1" >> "$1".tmp && chmod 644 "$1".tmp && mv "$1".tmp "$1"' \
+            /usr/bin/flock -x "$1".lock \
+                /bin/bash -c \
+                    '/usr/bin/printf "%s\n" "$2" > "$1".tmp && /usr/bin/cat "$1" >> "$1".tmp && /usr/bin/chmod 644 "$1".tmp && /usr/bin/mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],
@@ -71,9 +71,9 @@ public sealed class SshNetHpcClient : IDisposable
     public async Task RemoveAuthorizedKeyAsync(string authorizedKeysPath, string keyLine, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync(
             $$"""
-            flock -x "$1".lock \
-                bash -c \
-                    'grep -vxF -- "$2" "$1" > "$1".tmp && chmod 644 "$1".tmp && mv "$1".tmp "$1"' \
+            /usr/bin/flock -x "$1".lock \
+                /bin/bash -c \
+                    '/usr/bin/grep -vxF -- "$2" "$1" > "$1".tmp && /usr/bin/chmod 644 "$1".tmp && /usr/bin/mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
             [authorizedKeysPath, keyLine],
@@ -81,7 +81,7 @@ public sealed class SshNetHpcClient : IDisposable
 
     private async Task<(int? Status, string Output)> RunAsync(string script, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
-        var setArgs = string.Join(' ', arguments.Select(a => $"\"$(printf '%s' '{Encode(a)}' | base64 -d)\""));
+        var setArgs = string.Join(' ', arguments.Select(a => $"\"$(/usr/bin/printf '%s' '{Encode(a)}' | /usr/bin/base64 -d)\""));
         using var cmd = client.CreateCommand($"set -- {setArgs}\n{script}");
         await cmd.ExecuteAsync(cancellationToken);
         var output = string.Concat(cmd.Result, cmd.Error);

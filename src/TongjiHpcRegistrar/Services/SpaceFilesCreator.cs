@@ -58,7 +58,7 @@ public static class SpaceFilesCreator
             mkdir -p "$TMUX_TMPDIR"
 
             # git
-            export GIT_SSH_COMMAND="ssh -F $HOME/.ssh/config"
+            export GIT_SSH_COMMAND="/usr/bin/ssh -F $HOME/.ssh/config"
             # ===== Hpc Registrar =====
 
             # User specific aliases and functions

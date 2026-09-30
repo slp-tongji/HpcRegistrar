@@ -47,7 +47,7 @@ public sealed class SshNetHpcClient : IDisposable
         await RunCheckedAsync($"/usr/bin/printf '%s' '{Encode(content)}' | /usr/bin/base64 -d > \"$1\"", [path], cancellationToken);
 
     public async Task ChmodAsync(string path, UnixFileMode mode, CancellationToken cancellationToken = default) =>
-        await RunCheckedAsync("/usr/bin/chmod \"$2\" \"$1\"", [path, ((int)mode).ToString()], cancellationToken);
+        await RunCheckedAsync("/usr/bin/chmod \"$2\" \"$1\"", [path, Convert.ToString((int)mode, 8)], cancellationToken);
 
     public async Task CreateSymbolicLinkAsync(string linkPath, string targetPath, CancellationToken cancellationToken = default) =>
         await RunCheckedAsync("/usr/bin/ln -s \"$2\" \"$1\"", [linkPath, targetPath], cancellationToken);

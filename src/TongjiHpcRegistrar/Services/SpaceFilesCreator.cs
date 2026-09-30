@@ -58,6 +58,9 @@ public static class SpaceFilesCreator
             export TMUX_TMPDIR="$XDG_RUNTIME_DIR"/tmux-{{Escape(layout.SpaceName)}}
             /usr/bin/mkdir -p "$TMUX_TMPDIR"
 
+            # screen
+            export SCREENDIR="$XDG_RUNTIME_DIR"/screen-{{Escape(layout.SpaceName)}}
+
             # git
             export GIT_SSH_COMMAND="/usr/bin/ssh -F $HOME/.ssh/config"
             # ===== Hpc Registrar =====

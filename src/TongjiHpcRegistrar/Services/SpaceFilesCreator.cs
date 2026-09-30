@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.IO;
 
 namespace TongjiHpcRegistrar.Services;
 
@@ -144,15 +145,19 @@ public static class SpaceFilesCreator
             fi
             """,
             cancellationToken);
-        await hpc.SetExecutableAsync(commandFile, cancellationToken);
+        await hpc.ChmodAsync(commandFile, UnixFileMode.UserRead | UnixFileMode.UserExecute, cancellationToken);
 
+        var ownerFile = Path.Combine(path, "owner");
         await hpc.WriteFileAsync(
-            Path.Combine(path, "owner"),
+            ownerFile,
             $$"""
             # 本文件用以指定此隔离空间的所有者，请不要修改或删除
             {{layout.Sub}}
             """,
             cancellationToken);
+        await hpc.ChmodAsync(ownerFile, UnixFileMode.UserRead, cancellationToken);
+
+        await hpc.ChmodAsync(path, UnixFileMode.UserRead | UnixFileMode.UserExecute, cancellationToken);
     }
 
     private static async Task WriteSshDirectoryAsync(

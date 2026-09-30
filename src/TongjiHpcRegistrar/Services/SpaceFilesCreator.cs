@@ -127,7 +127,13 @@ public static class SpaceFilesCreator
             add_env XDG_RUNTIME_DIR
             add_env DBUS_SESSION_BUS_ADDRESS
             add_env DISPLAY
+            add_env XAUTHORITY
             add_env XDG_SESSION_ID
+            add_env XDG_SESSION_TYPE
+            add_env XDG_SESSION_CLASS
+            add_env SSH_CONNECTION
+            add_env SSH_CLIENT
+            add_env SSH_TTY
 
             cd $NEW_HOME
 

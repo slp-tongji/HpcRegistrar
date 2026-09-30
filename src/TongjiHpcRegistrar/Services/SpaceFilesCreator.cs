@@ -113,14 +113,28 @@ public static class SpaceFilesCreator
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             NEW_HOME={{Escape(layout.SpaceHomePath)}}
-            NEW_ENV="HOME=$NEW_HOME TERM=$TERM SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+
+            NEW_ENV=("HOME=$NEW_HOME")
+            
+            add_env() {
+                if [ -n "${!1}" ]; then
+                    NEW_ENV+=("$1=${!1}")
+                fi
+            }
+
+            add_env TERM
+            add_env SSH_AUTH_SOCK
+            add_env XDG_RUNTIME_DIR
+            add_env DBUS_SESSION_BUS_ADDRESS
+            add_env DISPLAY
+            add_env XDG_SESSION_ID
 
             cd $NEW_HOME
 
             if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-                exec /usr/bin/env -i $NEW_ENV /bin/bash --login
+                exec /usr/bin/env -i "${NEW_ENV[@]}" /bin/bash --login
             else
-                exec /usr/bin/env -i $NEW_ENV /bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
+                exec /usr/bin/env -i "${NEW_ENV[@]}" /bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
             fi
             """,
             cancellationToken);

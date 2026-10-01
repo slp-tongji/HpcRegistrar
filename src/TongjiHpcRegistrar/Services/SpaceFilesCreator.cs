@@ -110,15 +110,15 @@ public static class SpaceFilesCreator
         await hpc.WriteFileAsync(
             commandFile,
             $$"""
-            #!/bin/bash
+            #!/usr/bin/bash
 
             # 本文件与 Tongji Hpc Registrar 相关，请勿修改、删除或移动，这可能导致无法正常登录
             # 更多信息请参考 https://github.com/slp-tongji/TongjiHpcRegistrar-Documentation
 
             NEW_HOME={{Escape(layout.SpaceHomePath)}}
 
-            NEW_ENV=("HOME=$NEW_HOME")
-            
+            NEW_ENV=("HOME=$NEW_HOME" "SHELL=/usr/bin/bash")
+
             add_env() {
                 if [ -n "${!1}" ]; then
                     NEW_ENV+=("$1=${!1}")
@@ -141,9 +141,9 @@ public static class SpaceFilesCreator
             cd $NEW_HOME
 
             if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
-                exec /usr/bin/env -i "${NEW_ENV[@]}" /bin/bash --login
+                exec /usr/bin/env -i "${NEW_ENV[@]}" /usr/bin/bash --login
             else
-                exec /usr/bin/env -i "${NEW_ENV[@]}" /bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
+                exec /usr/bin/env -i "${NEW_ENV[@]}" /usr/bin/bash --login -c "$SSH_ORIGINAL_COMMAND"
             fi
             """,
             cancellationToken);

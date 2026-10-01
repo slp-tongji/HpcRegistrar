@@ -62,7 +62,7 @@ public sealed class SshNetHpcClient : IDisposable
         await RunCheckedAsync(
             $$"""
             /usr/bin/flock -x "$1".lock \
-                /bin/bash -c \
+                /usr/bin/bash -c \
                     '/usr/bin/printf "%s\n" "$2" > "$1".tmp && /usr/bin/cat "$1" >> "$1".tmp && /usr/bin/chmod 644 "$1".tmp && /usr/bin/mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,
@@ -73,7 +73,7 @@ public sealed class SshNetHpcClient : IDisposable
         await RunCheckedAsync(
             $$"""
             /usr/bin/flock -x "$1".lock \
-                /bin/bash -c \
+                /usr/bin/bash -c \
                     '/usr/bin/grep -vxF -- "$2" "$1" > "$1".tmp && /usr/bin/chmod 644 "$1".tmp && /usr/bin/mv "$1".tmp "$1"' \
                     _ "$1" "$2"
             """,

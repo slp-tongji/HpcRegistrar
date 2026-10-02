@@ -138,7 +138,7 @@ public static class SpaceFilesCreator
             add_env SSH_CLIENT
             add_env SSH_TTY
 
-            cd $NEW_HOME
+            cd "$NEW_HOME"
 
             if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
                 exec /usr/bin/env -i "${NEW_ENV[@]}" /usr/bin/bash --login
